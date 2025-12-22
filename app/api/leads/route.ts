@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { leadSchema } from '@/lib/validations';
-import { saveRead } from '@/lib/leads-store';
+import { saveLead } from '@/lib/leads-store';
 import { sendNotifications } from '@/lib/notifications';
 
 export async function POST(request: NextRequest) {
@@ -11,7 +11,7 @@ export async function POST(request: NextRequest) {
     const validatedData = leadSchema.parse(body);
 
     // Save lead
-    const lead = await saveRead(validatedData);
+    const lead = await saveLead(validatedData);
 
     // Send notifications (non-blocking)
     sendNotifications(lead).catch((error) => {

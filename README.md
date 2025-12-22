@@ -122,31 +122,44 @@ asapjet-flights/
 
 ## Data Storage
 
-Leads are stored in `data/leads.json` as a JSON array. This file is auto-created on first lead submission.
+Leads are stored in **Vercel KV** (Redis), which works seamlessly with Vercel's serverless platform.
 
-**Important**: Add `data/leads.json` to `.gitignore` to avoid committing sensitive customer data.
+### Setting up Vercel KV
 
-### Swapping Storage
+1. In your Vercel project dashboard, go to the "Storage" tab
+2. Click "Create Database" → Select "KV"
+3. Name it (e.g., "asapjet-leads") and click "Create"
+4. Vercel will automatically add the required environment variables (`KV_URL`, `KV_REST_API_URL`, etc.)
+5. Redeploy your application
 
-The storage interface is abstracted in `lib/leads-store.ts`. To use a database:
+That's it! No additional configuration needed.
 
-1. Install your database client (e.g., `@vercel/postgres`, `prisma`, etc.)
-2. Update `saveRead()` and `getAllLeads()` in `lib/leads-store.ts`
-3. Keep the same function signatures for compatibility
+### Local Development
+
+For local development, you can either:
+- Connect to your Vercel KV instance (get credentials from Vercel dashboard)
+- Or temporarily switch back to file-based storage for testing
 
 ## Deployment
 
 ### Vercel (Recommended)
 
-1. Push your code to GitHub
+1. Push your code to GitHub (already done!)
 
-2. Import the project in [Vercel](https://vercel.com)
+2. Import the project in [Vercel](https://vercel.com/new)
 
-3. Configure environment variables in Vercel dashboard
+3. Configure environment variables:
+   - `ADMIN_PASSWORD`
+   - `NEXT_PUBLIC_CONTACT_PHONE`
+   - (Optional) Resend, Twilio, webhook vars
 
-4. Deploy
+4. Click "Deploy"
 
-**Important**: When deploying to a serverless environment, consider migrating from JSON file storage to a database (Vercel Postgres, Supabase, etc.) for production use.
+5. After deployment, **create a Vercel KV database**:
+   - Go to your project → "Storage" tab
+   - Click "Create Database" → "KV"
+   - Name it and create
+   - Redeploy your app (Vercel adds KV env vars automatically)
 
 ### Other Platforms
 
