@@ -27,16 +27,16 @@ export default function Footer() {
           <div>
             <h3 className="font-semibold mb-4">Legal</h3>
             <p className="text-gray-400 text-sm">
-              ASAP Jet is a charter broker.
+              ASAPJet.Flights is a network of independent trusted charter brokers.
               <br />
-              We do not operate aircraft.
+              We do not operate aircraft or act as a broker ourselves.
             </p>
           </div>
         </div>
 
         <div className="border-t border-gray-800 pt-8">
           <p className="text-gray-500 text-xs leading-relaxed">
-            <strong>Disclaimer:</strong> All charter availability, pricing, and departure times are subject to aircraft and operator availability, regulatory requirements, weather, and operational constraints. Quoted response times and departure windows are typical estimates and not guaranteed. ASAP Jet acts as a charter broker and does not operate aircraft. All flights are provided by FAA Part 135 certified operators. By using this service, you acknowledge that charter arrangements depend on real-time availability and may be subject to change.
+            <strong>Disclaimer:</strong> All charter availability, pricing, and departure times are subject to aircraft and operator availability, regulatory requirements, weather, and operational constraints. Quoted response times and departure windows are typical estimates and not guaranteed. ASAPJet.Flights operates as a network of independent trusted charter brokers and does not act as a broker itself or operate aircraft. All flights are arranged through and provided by independent FAA Part 135 certified charter operators and brokers. By using this service, you acknowledge that charter arrangements depend on real-time availability and may be subject to change.
           </p>
         </div>
 
