@@ -1,6 +1,5 @@
 import { Lead } from '@/types/lead';
 import { Resend } from 'resend';
-import { Twilio } from 'twilio';
 
 export async function sendNotifications(lead: Lead): Promise<void> {
   const promises: Promise<void>[] = [];
@@ -10,14 +9,9 @@ export async function sendNotifications(lead: Lead): Promise<void> {
     promises.push(sendEmailNotification(lead));
   }
 
-  // SMS notification
-  if (
-    process.env.TWILIO_ACCOUNT_SID &&
-    process.env.TWILIO_AUTH_TOKEN &&
-    process.env.TWILIO_FROM_NUMBER &&
-    process.env.TWILIO_TO_NUMBER
-  ) {
-    promises.push(sendSMSNotification(lead));
+  // Bland AI voice notification
+  if (process.env.BLAND_API_KEY && process.env.BLAND_NOTIFY_PHONE) {
+    promises.push(sendBlandNotification(lead));
   }
 
   // Webhook notification
@@ -71,22 +65,64 @@ Lead ID: ${lead.id}
   }
 }
 
-async function sendSMSNotification(lead: Lead): Promise<void> {
+async function sendBlandNotification(lead: Lead): Promise<void> {
   try {
-    const client = new Twilio(
-      process.env.TWILIO_ACCOUNT_SID!,
-      process.env.TWILIO_AUTH_TOKEN!
-    );
+    const urgencyLabel = lead.urgency === 'critical' ? 'CRITICAL' : lead.urgency === 'urgent' ? 'URGENT' : 'Standard';
 
-    const urgencyEmoji = lead.urgency === 'critical' ? '🚨' : lead.urgency === 'urgent' ? '⚡' : '✈️';
+    // Create the call script for Bland
+    const callScript = `
+      Hi, this is an automated notification from ASAP Jet.
 
-    await client.messages.create({
-      from: process.env.TWILIO_FROM_NUMBER!,
-      to: process.env.TWILIO_TO_NUMBER!,
-      body: `${urgencyEmoji} ASAP Jet Lead\n${lead.name} | ${lead.pax} pax\n${lead.from_airport_or_city} → ${lead.to_airport_or_city}\n${lead.date_time}\n${lead.phone}`,
+      You have a new ${urgencyLabel} priority charter lead.
+
+      Passenger name: ${lead.name}
+
+      Route: ${lead.from_airport_or_city} to ${lead.to_airport_or_city}
+
+      Departure: ${lead.date_time}
+
+      Number of passengers: ${lead.pax}
+
+      Contact phone: ${lead.phone}
+
+      Contact email: ${lead.email}
+
+      ${lead.notes ? `Additional notes: ${lead.notes}` : ''}
+
+      This lead was submitted at ${new Date(lead.timestamp).toLocaleString()}.
+
+      Lead ID: ${lead.id}
+
+      You can view full details in your admin dashboard. Thank you.
+    `.trim();
+
+    // Make Bland API call
+    const response = await fetch('https://api.bland.ai/v1/calls', {
+      method: 'POST',
+      headers: {
+        'Authorization': process.env.BLAND_API_KEY!,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        phone_number: process.env.BLAND_NOTIFY_PHONE,
+        task: callScript,
+        voice: 'maya', // Professional female voice
+        max_duration: 3, // 3 minutes max
+        record: true,
+        wait_for_greeting: true,
+      }),
     });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Bland API failed: ${response.status} - ${errorText}`);
+    }
+
+    const data = await response.json();
+    console.log('Bland notification sent:', data.call_id);
+
   } catch (error) {
-    console.error('SMS notification failed:', error);
+    console.error('Bland notification failed:', error);
   }
 }
 

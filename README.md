@@ -64,14 +64,12 @@ If all three are set, email notifications will be sent on lead submission:
 - `LEADS_NOTIFY_EMAIL_TO`: Email address to receive notifications
 - `LEADS_NOTIFY_EMAIL_FROM`: Verified sender email address in Resend
 
-### Optional - SMS Notifications
+### Optional - Voice Notifications (Bland AI)
 
-If all four are set, SMS notifications will be sent on lead submission:
+If both are set, you'll receive a voice call when a lead is submitted:
 
-- `TWILIO_ACCOUNT_SID`: Your Twilio account SID
-- `TWILIO_AUTH_TOKEN`: Your Twilio auth token
-- `TWILIO_FROM_NUMBER`: Your Twilio phone number (E.164 format)
-- `TWILIO_TO_NUMBER`: Phone number to receive notifications (E.164 format)
+- `BLAND_API_KEY`: Your Bland AI API key (get from [bland.ai](https://app.bland.ai))
+- `BLAND_NOTIFY_PHONE`: Your phone number to call (E.164 format, e.g., +15551234567)
 
 ### Optional - Webhook Integration
 
@@ -205,13 +203,15 @@ Features:
 
 When a lead is submitted:
 
-1. Lead is saved to `data/leads.json`
+1. Lead is saved to Vercel KV (Redis)
 2. If configured, email notification is sent via Resend
-3. If configured, SMS notification is sent via Twilio
+3. If configured, voice call notification is made via Bland AI
 4. If configured, JSON payload is POSTed to webhook URL
 5. User is redirected to `/thanks`
 
 All notifications run asynchronously and won't block the user experience if they fail.
+
+**Voice Call Details:** When Bland AI is configured, you'll receive an automated phone call reading out the lead details including passenger name, route, urgency level, and contact information.
 
 ## Customization
 
