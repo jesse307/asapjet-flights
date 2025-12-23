@@ -3,11 +3,25 @@
 import { useState } from 'react';
 import { Lead } from '@/types/lead';
 
+interface CallLog {
+  id: string;
+  call_id: string;
+  lead_id: string;
+  status: string;
+  timestamp: string;
+  started_at?: string;
+  ended_at?: string;
+  duration?: number;
+  cost?: number;
+  error?: string;
+}
+
 export default function AdminLeadsPage() {
   const [password, setPassword] = useState('');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [leads, setLeads] = useState<Lead[]>([]);
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
+  const [callLogs, setCallLogs] = useState<CallLog[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -35,6 +49,33 @@ export default function AdminLeadsPage() {
     } finally {
       setIsLoading(false);
     }
+  }
+
+  async function fetchCallLogs(leadId: string) {
+    try {
+      const response = await fetch(`/api/admin/call-logs?leadId=${leadId}`, {
+        headers: {
+          'Authorization': `Bearer ${password}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setCallLogs(data.callLogs || []);
+      } else {
+        console.error('Failed to fetch call logs');
+        setCallLogs([]);
+      }
+    } catch (error) {
+      console.error('Error fetching call logs:', error);
+      setCallLogs([]);
+    }
+  }
+
+  function handleViewDetails(lead: Lead) {
+    setSelectedLead(lead);
+    setCallLogs([]);
+    fetchCallLogs(lead.id);
   }
 
   if (!isAuthenticated) {
@@ -143,7 +184,7 @@ export default function AdminLeadsPage() {
                     </td>
                     <td className="px-4 py-3 text-sm">
                       <button
-                        onClick={() => setSelectedLead(lead)}
+                        onClick={() => handleViewDetails(lead)}
                         className="text-[#ff6b35] hover:underline"
                       >
                         View Details
@@ -245,6 +286,69 @@ export default function AdminLeadsPage() {
                       </div>
                     </div>
                   )}
+
+                  <div className="border-t border-gray-700 pt-4 mt-4">
+                    <div className="text-sm text-gray-400 mb-3">Call Logs</div>
+                    {callLogs.length === 0 ? (
+                      <div className="text-sm text-gray-500 italic">No phone calls logged for this lead</div>
+                    ) : (
+                      <div className="space-y-2">
+                        {callLogs.map((log) => (
+                          <div key={log.id} className="bg-[#242424] border border-gray-700 rounded p-3">
+                            <div className="flex justify-between items-start mb-2">
+                              <div className="font-mono text-xs text-gray-400">Call ID: {log.call_id}</div>
+                              <span
+                                className={`px-2 py-1 rounded text-xs font-semibold ${
+                                  log.status === 'completed'
+                                    ? 'bg-green-900/30 text-green-200'
+                                    : log.status === 'failed'
+                                    ? 'bg-red-900/30 text-red-200'
+                                    : log.status === 'in-progress'
+                                    ? 'bg-blue-900/30 text-blue-200'
+                                    : 'bg-gray-700 text-gray-200'
+                                }`}
+                              >
+                                {log.status}
+                              </span>
+                            </div>
+                            <div className="grid grid-cols-2 gap-2 text-xs">
+                              <div>
+                                <span className="text-gray-400">Initiated:</span>{' '}
+                                {new Date(log.timestamp).toLocaleString()}
+                              </div>
+                              {log.started_at && (
+                                <div>
+                                  <span className="text-gray-400">Started:</span>{' '}
+                                  {new Date(log.started_at).toLocaleString()}
+                                </div>
+                              )}
+                              {log.ended_at && (
+                                <div>
+                                  <span className="text-gray-400">Ended:</span>{' '}
+                                  {new Date(log.ended_at).toLocaleString()}
+                                </div>
+                              )}
+                              {log.duration && (
+                                <div>
+                                  <span className="text-gray-400">Duration:</span> {log.duration}s
+                                </div>
+                              )}
+                              {log.cost && (
+                                <div>
+                                  <span className="text-gray-400">Cost:</span> ${log.cost.toFixed(4)}
+                                </div>
+                              )}
+                            </div>
+                            {log.error && (
+                              <div className="mt-2 text-xs text-red-300">
+                                <span className="text-gray-400">Error:</span> {log.error}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>

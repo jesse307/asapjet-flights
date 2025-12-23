@@ -64,12 +64,13 @@ If all three are set, email notifications will be sent on lead submission:
 - `LEADS_NOTIFY_EMAIL_TO`: Email address to receive notifications
 - `LEADS_NOTIFY_EMAIL_FROM`: Verified sender email address in Resend
 
-### Optional - Voice Notifications (Bland AI)
+### Optional - Voice Notifications (VAPI)
 
-If both are set, you'll receive a voice call when a lead is submitted:
+If all three are set, you'll receive a voice call when a lead is submitted:
 
-- `BLAND_API_KEY`: Your Bland AI API key (get from [bland.ai](https://app.bland.ai))
-- `BLAND_NOTIFY_PHONE`: Your phone number to call (E.164 format, e.g., +15551234567)
+- `VAPI_API_KEY`: Your VAPI API key (get from [vapi.ai](https://vapi.ai))
+- `VAPI_PHONE_NUMBER_ID`: Your VAPI phone number ID
+- `VAPI_NOTIFY_PHONE`: Your phone number to call (E.164 format, e.g., +15551234567)
 
 ### Optional - Webhook Integration
 
@@ -151,8 +152,7 @@ For local development, use the same Supabase credentials in your `.env.local` fi
    - `NEXT_PUBLIC_SUPABASE_URL` - Your Supabase project URL
    - `SUPABASE_SERVICE_ROLE_KEY` - Your Supabase service role key
    - (Optional) `RESEND_API_KEY`, `LEADS_NOTIFY_EMAIL_TO`, `LEADS_NOTIFY_EMAIL_FROM`
-   - (Optional) `BLAND_API_KEY`, `BLAND_NOTIFY_PHONE`
-   - (Optional) `VAPI_API_KEY`
+   - (Optional) `VAPI_API_KEY`, `VAPI_PHONE_NUMBER_ID`, `VAPI_NOTIFY_PHONE`
    - (Optional) `N8N_WEBHOOK_URL`
 
 4. Click "Deploy"
@@ -203,13 +203,15 @@ When a lead is submitted:
 
 1. Lead is saved to Supabase (PostgreSQL)
 2. If configured, email notification is sent via Resend
-3. If configured, voice call notification is made via Bland AI
+3. If configured, voice call notification is made via VAPI
 4. If configured, JSON payload is POSTed to webhook URL
 5. User is redirected to `/thanks`
 
 All notifications run asynchronously and won't block the user experience if they fail.
 
-**Voice Call Details:** When Bland AI is configured, you'll receive an automated phone call reading out the lead details including passenger name, route, urgency level, and contact information.
+**Voice Call Details:** When VAPI is configured, you'll receive an automated phone call reading out the lead details including passenger name, route, urgency level, and contact information. All calls are logged to Supabase with status tracking (initiated, in-progress, completed, failed).
+
+**Call Logging:** Phone calls are tracked in the `call_logs` table with status updates via VAPI webhooks. You can view call history for each lead in the admin dashboard.
 
 ## Customization
 

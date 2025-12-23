@@ -2,13 +2,13 @@ import { createClient } from '@supabase/supabase-js';
 import { Lead, LeadInput } from '@/types/lead';
 
 // Get Supabase credentials from environment (check both prefixed and non-prefixed)
-const supabaseUrl = process.env.NEXT_PUBLIC_asapflight_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseUrl = process.env.NEXT_PUBLIC_asapflights_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
 // Try anon key first (from Vercel integration), then service role key, then JWT secret as last resort
 const supabaseServiceKey =
-  process.env.NEXT_PUBLIC_asapflight_SUPABASE_ANON_KEY ||
-  process.env.asapflight_SUPABASE_SERVICE_ROLE_KEY ||
+  process.env.NEXT_PUBLIC_asapflights_SUPABASE_ANON_KEY ||
+  process.env.asapflights_SUPABASE_SERVICE_ROLE_KEY ||
   process.env.SUPABASE_SERVICE_ROLE_KEY ||
-  process.env.asapflight_SUPABASE_JWT_SECRET;
+  process.env.asapflights_SUPABASE_JWT_SECRET;
 
 // Validate credentials are present
 if (!supabaseUrl || !supabaseServiceKey) {
