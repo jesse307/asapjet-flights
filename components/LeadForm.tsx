@@ -22,7 +22,7 @@ export default function LeadForm() {
       name: formData.get('name') as string,
       phone: formData.get('phone') as string,
       email: formData.get('email') as string,
-      urgency: formData.get('urgency') as 'normal' | 'urgent' | 'critical',
+      urgency: 'urgent' as const, // All ASAP quotes are urgent
       notes: formData.get('notes') as string || undefined,
     };
 
@@ -111,23 +111,6 @@ export default function LeadForm() {
                 className="w-full px-4 py-3 bg-[#1a1a1a] border border-gray-700 rounded-lg focus:outline-none focus:border-[#ff6b35] text-white"
               />
             </div>
-          </div>
-
-          <div>
-            <label htmlFor="urgency" className="block text-sm font-medium mb-2">
-              Urgency *
-            </label>
-            <select
-              id="urgency"
-              name="urgency"
-              required
-              defaultValue="normal"
-              className="w-full px-4 py-3 bg-[#1a1a1a] border border-gray-700 rounded-lg focus:outline-none focus:border-[#ff6b35] text-white"
-            >
-              <option value="normal">Standard (24-48 hours)</option>
-              <option value="urgent">Urgent (12-24 hours)</option>
-              <option value="critical">Critical (ASAP / Same-day)</option>
-            </select>
           </div>
 
           <div className="grid md:grid-cols-2 gap-6">
