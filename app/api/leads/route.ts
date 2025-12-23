@@ -11,8 +11,19 @@ export async function POST(request: NextRequest) {
     console.log('[Leads API] Raw body:', JSON.stringify(body, null, 2));
     console.log('[Leads API] Body keys:', Object.keys(body));
 
+    // Extract data from VAPI's wrapper structure if present
+    let leadData = body;
+
+    // Check if this is a VAPI tool call with wrapped data
+    if (body.message?.toolCalls?.[0]?.function?.arguments) {
+      console.log('[Leads API] Extracting from VAPI tool call structure');
+      leadData = body.message.toolCalls[0].function.arguments;
+    }
+
+    console.log('[Leads API] Extracted data:', leadData);
+
     // Validate input
-    const validatedData = leadSchema.parse(body);
+    const validatedData = leadSchema.parse(leadData);
 
     console.log('[Leads API] Validation passed:', validatedData);
 
