@@ -3,12 +3,15 @@ import { NextRequest, NextResponse } from 'next/server';
 // Diagnostic endpoint to check environment variables
 // DELETE THIS FILE AFTER DEBUGGING
 export async function GET(request: NextRequest) {
-  // Check admin password for security
-  const authHeader = request.headers.get('authorization');
-  const password = authHeader?.replace('Bearer ', '');
+  // Check admin password from query string for easy browser access
+  const { searchParams } = new URL(request.url);
+  const password = searchParams.get('password');
 
   if (password !== process.env.ADMIN_PASSWORD) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    return NextResponse.json({
+      error: 'Unauthorized',
+      message: 'Add ?password=YOUR_ADMIN_PASSWORD to the URL'
+    }, { status: 401 });
   }
 
   return NextResponse.json({
