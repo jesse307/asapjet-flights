@@ -91,7 +91,7 @@ Lead ID: ${lead.id}
       `.trim(),
     });
 
-    console.log('[Email] Email sent successfully. ID:', result.id);
+    console.log('[Email] Email sent successfully:', result.data?.id || 'success');
   } catch (error) {
     console.error('[Email] Email notification failed:', error);
     throw error; // Re-throw so Promise.allSettled catches it
