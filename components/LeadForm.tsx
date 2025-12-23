@@ -3,6 +3,13 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
+// Extend Window interface for gtag
+declare global {
+  interface Window {
+    gtag?: (...args: any[]) => void;
+  }
+}
+
 export default function LeadForm() {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -35,6 +42,16 @@ export default function LeadForm() {
 
       if (!response.ok) {
         throw new Error('Submission failed');
+      }
+
+      // Fire Google Ads conversion tracking
+      if (window.gtag) {
+        window.gtag('event', 'conversion', {
+          'send_to': 'AW-17827004507/YOUR_CONVERSION_LABEL', // Replace with actual conversion label from Google Ads
+          'value': 25.0,
+          'currency': 'USD',
+          'transaction_id': '' // Optional: add lead ID if needed
+        });
       }
 
       router.push('/thanks');
