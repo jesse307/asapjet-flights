@@ -1,8 +1,21 @@
+import Image from 'next/image';
+
 export default function HeroSection() {
   const contactPhone = process.env.NEXT_PUBLIC_CONTACT_PHONE || '+1 (862) 777-8468';
 
   return (
     <section className="min-h-[60vh] flex flex-col justify-center items-center text-center px-4 py-16 md:py-24">
+      {/* Logo */}
+      <div className="mb-8">
+        <Image
+          src="/logo.svg"
+          alt="ASAP Jet Logo"
+          width={200}
+          height={60}
+          priority
+        />
+      </div>
+
       <h1 className="text-5xl md:text-7xl font-bold mb-6 tracking-tight">
         Need a Jet — <span className="text-[#ff6b35]">ASAP?</span>
       </h1>

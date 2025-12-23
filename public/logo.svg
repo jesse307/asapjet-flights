@@ -1,0 +1,14 @@
+<svg width="200" height="60" viewBox="0 0 200 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Jet icon -->
+  <path d="M20 30L35 20L50 30L45 32L50 40L42 38L40 45L35 40L30 45L28 38L20 40L25 32L20 30Z" fill="#FF6B35"/>
+  <path d="M35 20L40 25L35 30L30 25L35 20Z" fill="#FFA500"/>
+
+  <!-- ASAP text -->
+  <text x="60" y="35" font-family="Arial, sans-serif" font-size="24" font-weight="bold" fill="#1a1a1a">ASAP</text>
+  <text x="60" y="50" font-family="Arial, sans-serif" font-size="12" fill="#666">JET</text>
+
+  <!-- Speed lines -->
+  <line x1="10" y1="25" x2="18" y2="25" stroke="#FF6B35" stroke-width="2" opacity="0.5"/>
+  <line x1="12" y1="30" x2="18" y2="30" stroke="#FF6B35" stroke-width="2" opacity="0.5"/>
+  <line x1="10" y1="35" x2="18" y2="35" stroke="#FF6B35" stroke-width="2" opacity="0.5"/>
+</svg>

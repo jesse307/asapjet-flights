@@ -15,6 +15,16 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "ASAP Jet - Rapid Response Private Jet Charter",
   description: "Time-critical private jet charter. Professional, reliable, and ready when you need it. Same-day and urgent flight coordination with Part 135 operators.",
+  icons: {
+    icon: '/logo.svg',
+  },
+  openGraph: {
+    title: "ASAP Jet - Rapid Response Private Jet Charter",
+    description: "Time-critical private jet charter. Professional, reliable, and ready when you need it.",
+    images: ['/logo.svg'],
+    type: 'website',
+    url: 'https://asapjet.flights',
+  },
 };
 
 export default function RootLayout({
