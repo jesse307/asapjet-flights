@@ -16,38 +16,23 @@ export async function POST(request: NextRequest) {
 
     console.log('[VAPI Inbound] Parsing lead parameters:', leadParams);
 
-    // Validate we have the minimum required fields
-    if (!leadParams.from_airport_or_city || !leadParams.to_airport_or_city) {
-      console.error('[VAPI Inbound] Missing required fields in payload:', leadParams);
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Missing required fields: from_airport_or_city and to_airport_or_city',
-          received: leadParams
-        },
-        { status: 400 }
-      );
-    }
+    // Apply defaults and transformations - be forgiving, capture every lead
+    const processedData = {
+      from_airport_or_city: leadParams.from_airport_or_city || leadParams.departure || 'Not provided',
+      to_airport_or_city: leadParams.to_airport_or_city || leadParams.destination || 'Not provided',
+      date_time: leadParams.date_time || leadParams.departure_date || 'To be confirmed',
+      pax: typeof leadParams.pax === 'string' ? parseInt(leadParams.pax, 10) : (leadParams.pax || 1),
+      name: leadParams.name || 'Phone Lead',
+      phone: leadParams.phone || 'Not provided',
+      email: leadParams.email || 'noemail@phonelead.com',
+      urgency: (leadParams.urgency as 'normal' | 'urgent' | 'critical') || 'urgent',
+      notes: leadParams.notes || undefined,
+    };
 
-    // Ensure pax is a number
-    if (typeof leadParams.pax === 'string') {
-      leadParams.pax = parseInt(leadParams.pax, 10);
-    }
+    console.log('[VAPI Inbound] Prepared lead data:', processedData);
 
-    // Ensure urgency is set
-    if (!leadParams.urgency) {
-      leadParams.urgency = 'urgent';
-    }
-
-    // Ensure email has a valid format (at least a placeholder)
-    if (!leadParams.email || leadParams.email === '') {
-      leadParams.email = 'noemail@phonelead.com';
-    }
-
-    console.log('[VAPI Inbound] Prepared lead data:', leadParams);
-
-    // Save lead to database
-    const lead = await saveLead(leadParams);
+    // Save lead to database using processed data
+    const lead = await saveLead(processedData);
     console.log('[VAPI Inbound] Lead saved successfully:', lead.id);
 
     // Send notifications (email, etc.)
