@@ -120,23 +120,22 @@ asapjet-flights/
 
 ## Data Storage
 
-Leads are stored in **Vercel KV** (Redis), which works seamlessly with Vercel's serverless platform.
+Leads are stored in **Supabase** (PostgreSQL), providing a full-featured database with admin UI.
 
-### Setting up Vercel KV
+### Setting up Supabase
 
-1. In your Vercel project dashboard, go to the "Storage" tab
-2. Click "Create Database" → Select "KV"
-3. Name it (e.g., "asapjet-leads") and click "Create"
-4. Vercel will automatically add the required environment variables (`KV_URL`, `KV_REST_API_URL`, etc.)
-5. Redeploy your application
-
-That's it! No additional configuration needed.
+1. Create a free account at [supabase.com](https://supabase.com)
+2. Create a new project
+3. Go to the **SQL Editor** in your project dashboard
+4. Run the SQL schema from `supabase-schema.sql` to create the `leads` table
+5. Go to **Project Settings** → **API** to get your credentials:
+   - Copy **Project URL** → use as `NEXT_PUBLIC_SUPABASE_URL`
+   - Copy **service_role** key → use as `SUPABASE_SERVICE_ROLE_KEY`
+6. Add these environment variables to your deployment platform
 
 ### Local Development
 
-For local development, you can either:
-- Connect to your Vercel KV instance (get credentials from Vercel dashboard)
-- Or temporarily switch back to file-based storage for testing
+For local development, use the same Supabase credentials in your `.env.local` file.
 
 ## Deployment
 
@@ -147,17 +146,16 @@ For local development, you can either:
 2. Import the project in [Vercel](https://vercel.com/new)
 
 3. Configure environment variables:
-   - `ADMIN_PASSWORD`
-   - `NEXT_PUBLIC_CONTACT_PHONE`
-   - (Optional) Resend, Twilio, webhook vars
+   - `ADMIN_PASSWORD` - Your admin dashboard password
+   - `NEXT_PUBLIC_CONTACT_PHONE` - Phone number displayed on site
+   - `NEXT_PUBLIC_SUPABASE_URL` - Your Supabase project URL
+   - `SUPABASE_SERVICE_ROLE_KEY` - Your Supabase service role key
+   - (Optional) `RESEND_API_KEY`, `LEADS_NOTIFY_EMAIL_TO`, `LEADS_NOTIFY_EMAIL_FROM`
+   - (Optional) `BLAND_API_KEY`, `BLAND_NOTIFY_PHONE`
+   - (Optional) `VAPI_API_KEY`
+   - (Optional) `N8N_WEBHOOK_URL`
 
 4. Click "Deploy"
-
-5. After deployment, **create a Vercel KV database**:
-   - Go to your project → "Storage" tab
-   - Click "Create Database" → "KV"
-   - Name it and create
-   - Redeploy your app (Vercel adds KV env vars automatically)
 
 ### Other Platforms
 
@@ -203,7 +201,7 @@ Features:
 
 When a lead is submitted:
 
-1. Lead is saved to Vercel KV (Redis)
+1. Lead is saved to Supabase (PostgreSQL)
 2. If configured, email notification is sent via Resend
 3. If configured, voice call notification is made via Bland AI
 4. If configured, JSON payload is POSTed to webhook URL
