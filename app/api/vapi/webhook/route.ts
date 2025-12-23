@@ -9,12 +9,12 @@ export async function POST(request: NextRequest) {
     console.log('[VAPI Webhook] Received event:', body.type);
 
     // Get Supabase credentials
-    const supabaseUrl = process.env.NEXT_PUBLIC_asapflights_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseUrl = process.env.NEXT_PUBLIC_asapflight_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseServiceKey =
-      process.env.NEXT_PUBLIC_asapflights_SUPABASE_ANON_KEY ||
-      process.env.asapflights_SUPABASE_SERVICE_ROLE_KEY ||
+      process.env.asapflight_SUPABASE_SERVICE_ROLE_KEY ||
       process.env.SUPABASE_SERVICE_ROLE_KEY ||
-      process.env.asapflights_SUPABASE_JWT_SECRET;
+      process.env.NEXT_PUBLIC_asapflight_SUPABASE_ANON_KEY ||
+      process.env.asapflight_SUPABASE_JWT_SECRET;
 
     if (!supabaseUrl || !supabaseServiceKey) {
       console.error('[VAPI Webhook] Supabase not configured');

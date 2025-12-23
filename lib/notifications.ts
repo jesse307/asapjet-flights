@@ -168,12 +168,12 @@ async function logCall(leadId: string, callId: string, status: string): Promise<
     // Import dynamically to avoid circular dependency
     const { createClient } = await import('@supabase/supabase-js');
 
-    const supabaseUrl = process.env.NEXT_PUBLIC_asapflights_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseUrl = process.env.NEXT_PUBLIC_asapflight_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseServiceKey =
-      process.env.NEXT_PUBLIC_asapflights_SUPABASE_ANON_KEY ||
-      process.env.asapflights_SUPABASE_SERVICE_ROLE_KEY ||
+      process.env.asapflight_SUPABASE_SERVICE_ROLE_KEY ||
       process.env.SUPABASE_SERVICE_ROLE_KEY ||
-      process.env.asapflights_SUPABASE_JWT_SECRET;
+      process.env.NEXT_PUBLIC_asapflight_SUPABASE_ANON_KEY ||
+      process.env.asapflight_SUPABASE_JWT_SECRET;
 
     if (!supabaseUrl || !supabaseServiceKey) {
       console.warn('[VAPI] Skipping call logging - Supabase not configured');
