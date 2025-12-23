@@ -1,9 +1,9 @@
 import { createClient } from '@supabase/supabase-js';
 import { Lead, LeadInput } from '@/types/lead';
 
-// Get Supabase credentials from environment
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+// Get Supabase credentials from environment (check both prefixed and non-prefixed)
+const supabaseUrl = process.env.asapflight_NEXT_PUBLIC_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseServiceKey = process.env.asapflight_SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 // Validate credentials are present
 if (!supabaseUrl || !supabaseServiceKey) {
