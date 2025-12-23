@@ -1,10 +1,10 @@
 -- Marketing Performance Tracking Schema for ASAP Jet
 
--- Ad campaigns table
+-- Ad campaigns table (Google Search only)
 CREATE TABLE IF NOT EXISTS ad_campaigns (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  platform TEXT NOT NULL CHECK (platform IN ('google', 'meta')),
-  campaign_id TEXT NOT NULL UNIQUE, -- Platform's campaign ID
+  platform TEXT NOT NULL CHECK (platform IN ('google')),
+  campaign_id TEXT NOT NULL UNIQUE, -- Google's campaign ID
   name TEXT NOT NULL,
   status TEXT NOT NULL CHECK (status IN ('active', 'paused', 'ended')),
   daily_budget NUMERIC(10, 2) NOT NULL,
@@ -33,16 +33,14 @@ CREATE TABLE IF NOT EXISTS ad_performance (
   UNIQUE(campaign_id, date)
 );
 
--- Ad copy variations
+-- Ad copy variations (Google Search only)
 CREATE TABLE IF NOT EXISTS ad_copy (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   campaign_id UUID REFERENCES ad_campaigns(id) ON DELETE CASCADE,
-  platform TEXT NOT NULL CHECK (platform IN ('google', 'meta')),
-  ad_id TEXT UNIQUE, -- Platform's ad ID
-  headlines TEXT[] NOT NULL, -- Array of headlines
-  descriptions TEXT[] NOT NULL, -- Array of descriptions
-  primary_text TEXT, -- For Meta ads
-  cta TEXT, -- Call to action
+  platform TEXT NOT NULL CHECK (platform IN ('google')),
+  ad_id TEXT UNIQUE, -- Google's ad ID
+  headlines TEXT[] NOT NULL, -- Array of headlines (up to 15)
+  descriptions TEXT[] NOT NULL, -- Array of descriptions (up to 4)
   status TEXT NOT NULL CHECK (status IN ('active', 'paused', 'testing')),
   impressions INTEGER DEFAULT 0,
   clicks INTEGER DEFAULT 0,
@@ -69,8 +67,8 @@ CREATE TABLE IF NOT EXISTS lead_attribution (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   lead_id UUID REFERENCES leads(id) ON DELETE CASCADE,
   campaign_id UUID REFERENCES ad_campaigns(id) ON DELETE SET NULL,
-  platform TEXT CHECK (platform IN ('google', 'meta', 'organic', 'direct')),
-  click_id TEXT, -- gclid or fbclid
+  platform TEXT CHECK (platform IN ('google', 'chatgpt', 'searchgpt', 'organic', 'direct')),
+  click_id TEXT, -- gclid for Google
   utm_source TEXT,
   utm_medium TEXT,
   utm_campaign TEXT,
@@ -81,6 +79,19 @@ CREATE TABLE IF NOT EXISTS lead_attribution (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+-- ChatGPT/SearchGPT citation tracking
+CREATE TABLE IF NOT EXISTS chatgpt_citations (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  date DATE NOT NULL,
+  citation_count INTEGER DEFAULT 0, -- Estimated citations based on referrals
+  click_throughs INTEGER DEFAULT 0, -- Actual clicks from ChatGPT/SearchGPT
+  leads_generated INTEGER DEFAULT 0, -- Conversions from ChatGPT traffic
+  source TEXT CHECK (source IN ('chatgpt', 'searchgpt', 'perplexity', 'other_ai')),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE(date, source)
+);
+
 -- Indexes for performance
 CREATE INDEX IF NOT EXISTS idx_ad_performance_campaign_date ON ad_performance(campaign_id, date DESC);
 CREATE INDEX IF NOT EXISTS idx_ad_performance_date ON ad_performance(date DESC);
@@ -89,6 +100,8 @@ CREATE INDEX IF NOT EXISTS idx_ad_campaigns_status ON ad_campaigns(status);
 CREATE INDEX IF NOT EXISTS idx_lead_attribution_campaign ON lead_attribution(campaign_id);
 CREATE INDEX IF NOT EXISTS idx_lead_attribution_lead ON lead_attribution(lead_id);
 CREATE INDEX IF NOT EXISTS idx_ai_optimization_timestamp ON ai_optimization_log(timestamp DESC);
+CREATE INDEX IF NOT EXISTS idx_chatgpt_citations_date ON chatgpt_citations(date DESC);
+CREATE INDEX IF NOT EXISTS idx_chatgpt_citations_source ON chatgpt_citations(source);
 
 -- Enable Row Level Security
 ALTER TABLE ad_campaigns ENABLE ROW LEVEL SECURITY;
@@ -96,6 +109,7 @@ ALTER TABLE ad_performance ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ad_copy ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ai_optimization_log ENABLE ROW LEVEL SECURITY;
 ALTER TABLE lead_attribution ENABLE ROW LEVEL SECURITY;
+ALTER TABLE chatgpt_citations ENABLE ROW LEVEL SECURITY;
 
 -- Create policies (service role has full access)
 CREATE POLICY "Enable all access for service role" ON ad_campaigns
@@ -111,6 +125,9 @@ CREATE POLICY "Enable all access for service role" ON ai_optimization_log
   FOR ALL USING (true) WITH CHECK (true);
 
 CREATE POLICY "Enable all access for service role" ON lead_attribution
+  FOR ALL USING (true) WITH CHECK (true);
+
+CREATE POLICY "Enable all access for service role" ON chatgpt_citations
   FOR ALL USING (true) WITH CHECK (true);
 
 -- Function to auto-update updated_at timestamp
@@ -130,4 +147,7 @@ CREATE TRIGGER update_ad_performance_updated_at BEFORE UPDATE ON ad_performance
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 CREATE TRIGGER update_ad_copy_updated_at BEFORE UPDATE ON ad_copy
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_chatgpt_citations_updated_at BEFORE UPDATE ON chatgpt_citations
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();

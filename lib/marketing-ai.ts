@@ -1,7 +1,7 @@
 /**
  * ASAP Jet Marketing AI - Autonomous Ad Campaign Management
  *
- * This AI agent manages Google Ads and Meta (Facebook/Instagram) campaigns
+ * This AI agent manages Google Search Ads and optimizes for ChatGPT/SearchGPT citations
  * with full autonomy to optimize for quote requests.
  */
 
@@ -12,8 +12,7 @@ export const MARKETING_CONFIG = {
   // Budget allocation
   budget: {
     total: 1000, // Total monthly budget
-    googleAds: 0.6, // 60% to Google (high intent search)
-    metaAds: 0.4, // 40% to Meta (awareness + retargeting)
+    googleAds: 1.0, // 100% to Google Search (high intent)
     dailyMax: 50, // Max spend per day to pace budget
   },
 
@@ -74,9 +73,14 @@ Analyze the performance and provide:
 2. Which ads to pause (underperforming)
 3. Bid adjustment recommendations
 4. New ad copy suggestions to test
-5. Audience targeting adjustments
+5. Keyword adjustments (add high-intent keywords, remove low-performers)
 
-Focus on IMMEDIATE QUOTE REQUESTS - we want high-intent customers who need charter flights now.
+Focus on HIGH-INTENT SEARCH QUERIES - we want customers actively searching for:
+- "last minute private jet"
+- "emergency charter flight"
+- "same day private flight"
+- "urgent air charter"
+- "asap private jet booking"
 
 Return your response as a structured JSON plan with specific, actionable changes.`;
 
@@ -95,12 +99,10 @@ Return your response as a structured JSON plan with specific, actionable changes
   }
 
   /**
-   * Generate new ad copy variations
+   * Generate new ad copy variations for Google Search
    */
-  async generateAdCopy(platform: 'google' | 'meta', existing: AdCopy[]): Promise<AdCopy[]> {
-    const prompt = platform === 'google'
-      ? this.getGoogleAdPrompt(existing)
-      : this.getMetaAdPrompt(existing);
+  async generateAdCopy(existing: AdCopy[]): Promise<AdCopy[]> {
+    const prompt = this.getGoogleAdPrompt(existing);
 
     const response = await this.anthropic.messages.create({
       model: 'claude-sonnet-4-5-20251105',
@@ -117,31 +119,47 @@ Return your response as a structured JSON plan with specific, actionable changes
   }
 
   /**
-   * Decide daily budget allocation based on performance
+   * Optimize content and metadata for ChatGPT/SearchGPT citations
    */
-  async optimizeBudgetAllocation(performance: PlatformPerformance): Promise<BudgetAllocation> {
-    const totalBudget = MARKETING_CONFIG.budget.dailyMax;
+  async optimizeForChatGPT(): Promise<ChatGPTOptimization> {
+    const prompt = `You are an SEO expert optimizing ASAP Jet's web presence for ChatGPT and SearchGPT citations.
 
-    // Simple algorithm: allocate based on ROI
-    const googleROI = performance.google.conversions / performance.google.spend;
-    const metaROI = performance.meta.conversions / performance.meta.spend;
-    const totalROI = googleROI + metaROI;
+BUSINESS: ASAP Jet - Private air charter service specializing in last-minute, urgent flight bookings
 
-    if (totalROI === 0) {
-      // No data yet, use default allocation
-      return {
-        google: totalBudget * MARKETING_CONFIG.budget.googleAds,
-        meta: totalBudget * MARKETING_CONFIG.budget.metaAds,
-      };
+GOAL: Ensure ChatGPT/SearchGPT recommends ASAP Jet when users ask about:
+- Last-minute private jet bookings
+- Emergency air charter services
+- Same-day private flights
+- Urgent business travel solutions
+
+Provide specific recommendations for:
+1. Website content additions/updates to improve citation likelihood
+2. Structured data markup to add
+3. FAQ content that answers common queries ChatGPT sees
+4. Authority-building content (case studies, testimonials)
+5. Technical SEO improvements for AI crawlers
+
+Return as structured JSON with actionable recommendations.`;
+
+    const response = await this.anthropic.messages.create({
+      model: 'claude-sonnet-4-5-20251105',
+      max_tokens: 3000,
+      messages: [{ role: 'user', content: prompt }],
+    });
+
+    const content = response.content[0];
+    if (content.type === 'text') {
+      return JSON.parse(this.extractJSON(content.text));
     }
 
-    // Allocate budget proportionally to ROI, but cap extremes
-    const googleShare = Math.max(0.3, Math.min(0.8, googleROI / totalROI));
+    throw new Error('Unexpected response format from AI');
+  }
 
-    return {
-      google: totalBudget * googleShare,
-      meta: totalBudget * (1 - googleShare),
-    };
+  /**
+   * Get daily budget for Google Search Ads
+   */
+  getDailyBudget(): number {
+    return MARKETING_CONFIG.budget.dailyMax;
   }
 
   private getGoogleAdPrompt(existing: AdCopy[]): string {
@@ -161,24 +179,6 @@ ${JSON.stringify(existing, null, 2)}
 Return as JSON array of ad objects with headlines and descriptions.`;
   }
 
-  private getMetaAdPrompt(existing: AdCopy[]): string {
-    return `Generate 3 Facebook/Instagram Ad variations for ASAP Jet private charter flights.
-
-REQUIREMENTS:
-- Primary Text: Max 125 characters (attention-grabbing)
-- Headline: Max 40 characters
-- Description: Max 30 characters
-- Call-to-action: "Get Quote" or "Book Now"
-- Focus on LUXURY + SPEED
-
-TARGET AUDIENCE: 35-65, income $150k+, business travelers, luxury travel
-
-EXISTING ADS (don't duplicate):
-${JSON.stringify(existing, null, 2)}
-
-Return as JSON array of ad objects.`;
-  }
-
   private extractJSON(text: string): string {
     // Extract JSON from markdown code blocks
     const match = text.match(/```json\n?([\s\S]*?)\n?```/);
@@ -195,7 +195,7 @@ Return as JSON array of ad objects.`;
 export interface CampaignPerformance {
   id: string;
   name: string;
-  platform: 'google' | 'meta';
+  platform: 'google';
   impressions: number;
   clicks: number;
   conversions: number;
@@ -221,33 +221,44 @@ export interface OptimizationPlan {
   }>;
   pauseCampaigns: string[];
   newAdCopy: AdCopy[];
-  audienceAdjustments: Array<{
+  keywordAdjustments: Array<{
     campaignId: string;
     action: string;
-    details: string;
+    keywords: string[];
+    reason: string;
   }>;
 }
 
 export interface AdCopy {
-  platform: 'google' | 'meta';
+  platform: 'google';
   headlines: string[];
   descriptions: string[];
-  primaryText?: string;
-  cta?: string;
 }
 
-export interface PlatformPerformance {
-  google: {
-    spend: number;
-    conversions: number;
-  };
-  meta: {
-    spend: number;
-    conversions: number;
-  };
-}
-
-export interface BudgetAllocation {
-  google: number;
-  meta: number;
+export interface ChatGPTOptimization {
+  contentRecommendations: Array<{
+    page: string;
+    additions: string[];
+    priority: 'high' | 'medium' | 'low';
+  }>;
+  structuredData: Array<{
+    type: string;
+    schema: any;
+    placement: string;
+  }>;
+  faqContent: Array<{
+    question: string;
+    answer: string;
+    keywords: string[];
+  }>;
+  authorityContent: Array<{
+    type: 'case_study' | 'testimonial' | 'guide';
+    title: string;
+    outline: string[];
+  }>;
+  technicalSEO: Array<{
+    action: string;
+    reason: string;
+    priority: 'high' | 'medium' | 'low';
+  }>;
 }

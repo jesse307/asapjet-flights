@@ -1,20 +1,22 @@
 # ASAP Jet Marketing AI Setup Guide
 
-This guide will help you set up Google Ads and Meta (Facebook/Instagram) advertising accounts, then connect them to your autonomous Marketing AI.
+This guide will help you set up Google Search Ads and optimize for ChatGPT/SearchGPT citations using autonomous Marketing AI.
 
 ## Overview
 
 Your Marketing AI will:
-- ✅ Automatically optimize ad budgets daily
+- ✅ Automatically optimize Google Search ad budgets daily
 - ✅ Generate and test new ad copy variations
 - ✅ Pause underperforming campaigns
 - ✅ Adjust bids based on performance
 - ✅ Track ROI and cost per lead
+- ✅ Optimize content for ChatGPT/SearchGPT citations
 - ✅ Provide daily performance reports
 
 **Budget**: $500-1000/month
-**Goal**: Immediate quote requests
+**Goal**: Immediate quote requests from high-intent searches
 **Automation**: Full autopilot
+**Platforms**: Google Search Ads + ChatGPT/SearchGPT optimization
 
 ---
 
@@ -53,47 +55,34 @@ Your Marketing AI will:
 
 ---
 
-## Step 2: Meta (Facebook/Instagram) Ads Setup
+## Step 2: ChatGPT/SearchGPT Optimization
 
-### 2.1 Create Meta Business Account
+### 2.1 Understanding AI Search Engines
 
-1. Go to [business.facebook.com](https://business.facebook.com)
-2. Click "Create Account"
-3. Enter your business name: "ASAP Jet"
-4. Confirm your name and business email
-5. Complete verification (may require business documents)
+ChatGPT and SearchGPT (OpenAI's search engine) are becoming major traffic sources. Unlike traditional SEO, AI citations require:
 
-### 2.2 Create Ad Account
+- **Authoritative, factual content** that AI can confidently cite
+- **Structured data** that helps AI understand your services
+- **Direct answers** to common questions
+- **Trust signals** like testimonials and case studies
 
-1. In Business Settings, go to "Accounts" → "Ad Accounts"
-2. Click "Add" → "Create a new ad account"
-3. Name it "ASAP Jet - Main"
-4. Choose USD as currency
-5. Set time zone to your location
-6. Add payment method
+### 2.2 Content Strategy for AI Citations
 
-### 2.3 Connect Facebook Page & Instagram
+The Marketing AI will automatically generate recommendations for:
 
-1. In Business Settings → "Pages"
-2. Click "Add" → Connect your Facebook page (or create one)
-3. Go to "Instagram Accounts"
-4. Click "Add" → Connect your Instagram business account
+1. **FAQ Content** - Common questions like "How quickly can I book a private jet?"
+2. **Case Studies** - Real examples of last-minute charter flights
+3. **Technical Details** - Aircraft types, range, capacity
+4. **Structured Data** - Schema markup for flights and services
 
-### 2.4 Get Access Token
+### 2.3 Tracking AI Referrals
 
-1. Go to [developers.facebook.com](https://developers.facebook.com)
-2. Click "My Apps" → "Create App"
-3. Choose "Business" type
-4. Name it "ASAP Jet Marketing AI"
-5. Go to "Tools" → "Graph API Explorer"
-6. Select your app
-7. Get Token → Select these permissions:
-   - `ads_read`
-   - `ads_management`
-   - `pages_read_engagement`
-   - `pages_manage_ads`
-8. Generate token and save it (this is your access token)
-9. Get your Ad Account ID from Business Settings
+Monitor traffic from:
+- `chat.openai.com` (ChatGPT web)
+- `searchgpt.com` (SearchGPT)
+- `perplexity.ai` (Perplexity AI)
+
+These will be tracked in the `chatgpt_citations` table.
 
 ---
 
@@ -104,7 +93,6 @@ Run these commands in your project directory:
 ```bash
 npm install @anthropic-ai/sdk
 npm install googleapis
-npm install facebook-nodejs-business-sdk
 ```
 
 ---
@@ -124,16 +112,14 @@ GOOGLE_ADS_DEVELOPER_TOKEN=your_developer_token_here
 GOOGLE_ADS_CUSTOMER_ID=123-456-7890
 GOOGLE_ADS_REFRESH_TOKEN=your_refresh_token_here
 
-# Meta Ads
-META_ACCESS_TOKEN=your_meta_access_token_here
-META_AD_ACCOUNT_ID=act_1234567890
-META_APP_ID=your_app_id_here
-META_APP_SECRET=your_app_secret_here
-
 # Marketing AI Settings
 MARKETING_DAILY_BUDGET=50
 MARKETING_TOTAL_BUDGET=1000
 MARKETING_TARGET_CPL=25
+MARKETING_AI_ENABLED=true
+
+# Cron Secret (generate a random string)
+CRON_SECRET=your_random_secret_here
 ```
 
 ---
@@ -151,40 +137,46 @@ This creates the tables for:
 - Performance metrics
 - AI optimization logs
 - Lead attribution
+- ChatGPT citation tracking
 
 ---
 
-## Step 6: Create Initial Campaigns
+## Step 6: Create Initial Google Search Campaigns
 
-Your Marketing AI will create and manage campaigns, but you need to approve the first set.
-
-### Google Search Campaign Template
+### High-Intent Search Campaign
 
 **Campaign Name**: ASAP Jet - Last Minute Charters
-**Type**: Search
-**Keywords** (Exact Match):
+
+**Campaign Type**: Search
+
+**Keywords** (Exact Match - High Intent):
 - `[last minute private jet]`
 - `[charter flight asap]`
 - `[emergency air charter]`
 - `[same day private flight]`
+- `[urgent private jet booking]`
+- `[immediate charter flight]`
 
 **Negative Keywords**:
 - `cheap`
 - `commercial`
 - `student`
 - `training`
+- `pilot school`
+- `jobs`
+- `careers`
 
-### Meta Campaign Template
+**Initial Budget**: $25/day
 
-**Campaign Name**: ASAP Jet - Luxury Travel
-**Objective**: Conversions (Lead)
-**Targeting**:
-- Age: 35-65
-- Income: Top 10%
-- Interests: Business travel, luxury travel, private aviation
-- Behaviors: Frequent travelers, business decision-makers
+**Ad Copy Example**:
+```
+Headline 1: Last Minute Private Jets
+Headline 2: Book Same-Day Flights ASAP
+Headline 3: 24/7 Charter Service
 
-**Placement**: Feed + Stories (both Facebook & Instagram)
+Description 1: Urgent private jet charters available now. Get instant quotes.
+Description 2: Professional crew, luxury aircraft. Fly today.
+```
 
 ---
 
@@ -201,25 +193,54 @@ Your Marketing AI will create and manage campaigns, but you need to approve the 
 7. Click-through window: 30 days
 8. Get the conversion tracking tag
 
-I'll automatically add this to your website.
+Add this to your environment variables:
+```bash
+GOOGLE_ADS_CONVERSION_ID=AW-XXXXXXXXX
+GOOGLE_ADS_CONVERSION_LABEL=XXXXXXXXXXXX
+```
 
-### Meta Pixel
-
-1. In Business Settings → "Data Sources" → "Pixels"
-2. Click "Add" → "Create a Pixel"
-3. Name it "ASAP Jet Pixel"
-4. Copy the Pixel ID
-
-I'll add the Meta Pixel to track conversions.
+The Marketing AI will automatically track conversions.
 
 ---
 
-## Step 8: Test & Launch
+## Step 8: Optimize for ChatGPT Citations
 
-1. Verify conversion tracking works (submit a test form)
-2. Check that campaigns are active
-3. Monitor first 24 hours closely
-4. Marketing AI will take over after initial data collection
+### 8.1 Add Structured Data
+
+Add this to your homepage to help AI understand your service:
+
+```json
+{
+  "@context": "https://schema.org",
+  "@type": "Service",
+  "name": "ASAP Jet Private Air Charter",
+  "description": "Last-minute private jet charter service with same-day availability",
+  "provider": {
+    "@type": "Organization",
+    "name": "ASAP Jet",
+    "url": "https://asapjet.flights"
+  },
+  "areaServed": "United States",
+  "availableChannel": {
+    "@type": "ServiceChannel",
+    "serviceUrl": "https://asapjet.flights",
+    "availableLanguage": "English"
+  }
+}
+```
+
+### 8.2 Create FAQ Page
+
+Add a FAQ page with questions ChatGPT users commonly ask:
+
+**Q: How quickly can I book a private jet?**
+A: ASAP Jet can arrange charter flights with as little as 2-4 hours notice, depending on aircraft availability and your departure location.
+
+**Q: What is the cost of a last-minute private jet?**
+A: Last-minute charter costs vary by route and aircraft type. Request an instant quote at asapjet.flights for accurate pricing.
+
+**Q: Can I book a private jet for same-day travel?**
+A: Yes, ASAP Jet specializes in same-day and last-minute private jet bookings. Contact us 24/7 for immediate availability.
 
 ---
 
@@ -230,17 +251,20 @@ Your Marketing AI will:
 ### Every Morning (8 AM):
 - Analyze previous day's performance
 - Adjust budgets based on ROI
-- Generate performance summary email
+- Review ChatGPT citation traffic
+- Generate performance summary
 
 ### Every Afternoon (2 PM):
 - Check mid-day performance
 - Pause severely underperforming ads
 - Adjust bids if needed
+- Monitor high-intent keyword performance
 
 ### Every Evening (8 PM):
 - Review daily spend vs budget
 - Generate new ad copy variations for tomorrow
 - Plan next day's budget allocation
+- Update ChatGPT optimization recommendations
 
 ---
 
@@ -251,10 +275,11 @@ Access your marketing dashboard at:
 
 You'll see:
 - Real-time spend and conversions
-- Cost per lead by platform
+- Cost per lead from Google Search
 - Active campaigns and their performance
 - AI's recent decisions and reasoning
 - Lead attribution (which campaign drove which lead)
+- ChatGPT/SearchGPT referral traffic
 
 ---
 
@@ -278,13 +303,54 @@ If you need to stop everything:
 
 ---
 
-## Support & Optimization
+## High-Intent Keywords Strategy
 
-**First Week**: AI is learning, expect some testing
-**Week 2-3**: Optimization kicks in, CPL should drop
-**Week 4+**: Steady-state performance, consistent leads
+Focus on search queries indicating **immediate need**:
 
-Questions? Check the AI optimization log to see its reasoning for any decision.
+### Primary Keywords (Exact Match):
+- `[last minute private jet]`
+- `[emergency charter flight]`
+- `[same day private flight]`
+- `[urgent air charter]`
+- `[asap private jet]`
+
+### Secondary Keywords (Phrase Match):
+- "book private jet today"
+- "immediate charter flight"
+- "private jet now"
+- "emergency air travel"
+
+### Avoid Broad Match - stick to exact and phrase match for high intent.
+
+---
+
+## ChatGPT Optimization Weekly Tasks
+
+The AI will generate recommendations, but you should manually:
+
+1. **Add Case Studies** - Real examples of successful last-minute charters
+2. **Update Testimonials** - Recent customer reviews
+3. **Create Guides** - "How to Book a Last-Minute Charter Flight"
+4. **Monitor AI Referrals** - Check which AI search engines are sending traffic
+
+---
+
+## Performance Benchmarks
+
+**Week 1**: AI is learning, expect testing and optimization
+- CPL: $30-40 (above target as AI gathers data)
+- CTR: 3-5%
+- Conversion Rate: 3-4%
+
+**Week 2-3**: Optimization kicks in
+- CPL: $25-30 (approaching target)
+- CTR: 5-7%
+- Conversion Rate: 4-6%
+
+**Week 4+**: Steady-state performance
+- CPL: $20-25 (at or below target)
+- CTR: 7-10%
+- Conversion Rate: 5-8%
 
 ---
 
@@ -293,9 +359,20 @@ Questions? Check the AI optimization log to see its reasoning for any decision.
 After setup is complete:
 1. ✅ Run the database migration
 2. ✅ Add environment variables to Vercel
-3. ✅ Create initial campaigns in Google & Meta
-4. ✅ Install conversion tracking pixels
-5. ✅ Test with small budget ($20/day) for 3 days
-6. ✅ Scale up to full budget once tracking is verified
+3. ✅ Create initial campaigns in Google Ads
+4. ✅ Install conversion tracking
+5. ✅ Add structured data to website
+6. ✅ Create FAQ page for AI citations
+7. ✅ Test with small budget ($20/day) for 3 days
+8. ✅ Scale up to full budget once tracking is verified
 
 The Marketing AI will handle the rest autonomously!
+
+---
+
+## Support
+
+Questions? Check the AI optimization log to see its reasoning for any decision:
+- Navigate to `/admin/marketing`
+- View "Optimization Log" tab
+- See detailed explanations for all budget, bid, and ad copy changes

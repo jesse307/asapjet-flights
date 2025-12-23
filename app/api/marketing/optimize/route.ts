@@ -126,50 +126,29 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Generate new ad copy variations
-    const platformsNeedingAds = new Set(campaignPerformance.map(c => c.platform));
-    const newAdCopy: any[] = [];
+    // Generate new ad copy variations for Google Search
+    const existing = await supabase
+      .from('ad_copy')
+      .select('*')
+      .eq('platform', 'google')
+      .eq('status', 'active');
 
-    for (const platform of platformsNeedingAds) {
-      const existing = await supabase
-        .from('ad_copy')
-        .select('*')
-        .eq('platform', platform)
-        .eq('status', 'active');
+    const newAds = await ai.generateAdCopy(existing.data || []);
 
-      const newAds = await ai.generateAdCopy(platform as 'google' | 'meta', existing.data || []);
-      newAdCopy.push(...newAds);
-
-      // Log new ad copy
+    // Log new ad copy
+    if (newAds.length > 0) {
       await supabase.from('ai_optimization_log').insert({
         action_type: 'new_ad_copy',
-        details: { platform, ads: newAds },
-        reason: `Generated ${newAds.length} new ${platform} ad variations for testing`,
+        details: { platform: 'google', ads: newAds },
+        reason: `Generated ${newAds.length} new Google Search ad variations for testing`,
         applied: false, // Requires manual review
       });
     }
 
-    // Calculate daily budget allocation
-    const platformPerf = campaigns?.reduce((acc: any, campaign: any) => {
-      const perf = campaign.ad_performance[0] || {};
-      const platform = campaign.platform;
+    // Get daily budget for Google Search
+    const dailyBudget = ai.getDailyBudget();
 
-      if (!acc[platform]) {
-        acc[platform] = { spend: 0, conversions: 0 };
-      }
-
-      acc[platform].spend += parseFloat(perf.spend || 0);
-      acc[platform].conversions += perf.conversions || 0;
-
-      return acc;
-    }, {});
-
-    const budgetAllocation = await ai.optimizeBudgetAllocation({
-      google: platformPerf?.google || { spend: 0, conversions: 0 },
-      meta: platformPerf?.meta || { spend: 0, conversions: 0 },
-    });
-
-    console.log('[Marketing AI] Recommended budget allocation:', budgetAllocation);
+    console.log('[Marketing AI] Daily budget for Google Search:', dailyBudget);
 
     // Return summary
     return NextResponse.json({
@@ -179,8 +158,8 @@ export async function GET(request: NextRequest) {
         campaignsAnalyzed: campaignPerformance.length,
         budgetChanges: optimizationPlan.budgetChanges.length,
         campaignsPaused: optimizationPlan.pauseCampaigns.length,
-        newAdCopyGenerated: newAdCopy.length,
-        budgetAllocation,
+        newAdCopyGenerated: newAds.length,
+        dailyBudget,
       },
       optimizationPlan,
     });
