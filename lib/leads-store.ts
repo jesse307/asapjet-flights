@@ -1,8 +1,14 @@
 import { createClient } from '@supabase/supabase-js';
 import { Lead, LeadInput } from '@/types/lead';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+// Get Supabase credentials from environment
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+// Validate credentials are present
+if (!supabaseUrl || !supabaseServiceKey) {
+  throw new Error('Missing Supabase environment variables. Please check NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are set.');
+}
 
 // Use service role key for server-side operations
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
