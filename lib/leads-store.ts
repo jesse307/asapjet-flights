@@ -1,38 +1,42 @@
-import { kv } from '@vercel/kv';
-import { v4 as uuidv4 } from 'uuid';
+import { createClient } from '@supabase/supabase-js';
 import { Lead, LeadInput } from '@/types/lead';
 
-const LEADS_KEY = 'leads';
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+
+// Use service role key for server-side operations
+const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 export async function saveLead(lead: LeadInput): Promise<Lead> {
-  const newLead: Lead = {
-    id: uuidv4(),
-    timestamp: new Date().toISOString(),
-    ...lead,
-  };
+  const { data, error } = await supabase
+    .from('leads')
+    .insert([
+      {
+        ...lead,
+        timestamp: new Date().toISOString(),
+      }
+    ])
+    .select()
+    .single();
 
-  // Get existing leads
-  const leads = await getAllLeads();
+  if (error) {
+    console.error('Error saving lead to Supabase:', error);
+    throw new Error('Failed to save lead');
+  }
 
-  // Add new lead to beginning (newest first)
-  leads.unshift(newLead);
-
-  // Save back to KV
-  await kv.set(LEADS_KEY, JSON.stringify(leads));
-
-  return newLead;
+  return data as Lead;
 }
 
 export async function getAllLeads(): Promise<Lead[]> {
-  const leadsData = await kv.get<string>(LEADS_KEY);
+  const { data, error } = await supabase
+    .from('leads')
+    .select('*')
+    .order('timestamp', { ascending: false });
 
-  if (!leadsData) {
+  if (error) {
+    console.error('Error fetching leads from Supabase:', error);
     return [];
   }
 
-  try {
-    return JSON.parse(leadsData);
-  } catch {
-    return [];
-  }
+  return (data as Lead[]) || [];
 }
