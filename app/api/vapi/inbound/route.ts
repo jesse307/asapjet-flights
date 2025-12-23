@@ -8,13 +8,45 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
 
-    console.log('[VAPI Inbound] Raw payload:', JSON.stringify(body, null, 2));
+    console.log('[VAPI Inbound] ========== NEW REQUEST ==========');
+    console.log('[VAPI Inbound] Full raw payload:', JSON.stringify(body, null, 2));
+    console.log('[VAPI Inbound] Payload keys:', Object.keys(body));
+    console.log('[VAPI Inbound] Payload type:', typeof body);
 
-    // VAPI sends function call data directly as the body when configured as a tool
-    // The body IS the parameters object
-    const leadParams = body;
+    // Try multiple extraction paths - VAPI can send data in different formats
+    let leadParams: any = {};
 
-    console.log('[VAPI Inbound] Parsing lead parameters:', leadParams);
+    // Path 1: Direct parameters (tool call)
+    if (body.from_airport_or_city || body.departure) {
+      console.log('[VAPI Inbound] Path 1: Using direct body parameters');
+      leadParams = body;
+    }
+    // Path 2: Nested in message.toolCalls
+    else if (body.message?.toolCalls?.[0]?.function?.arguments) {
+      console.log('[VAPI Inbound] Path 2: Using message.toolCalls');
+      const args = body.message.toolCalls[0].function.arguments;
+      leadParams = typeof args === 'string' ? JSON.parse(args) : args;
+    }
+    // Path 3: Nested in call.messages
+    else if (body.call?.messages) {
+      console.log('[VAPI Inbound] Path 3: Searching call.messages');
+      const messages = body.call.messages;
+      for (const msg of messages) {
+        if (msg.toolCalls?.[0]?.function?.arguments) {
+          const args = msg.toolCalls[0].function.arguments;
+          leadParams = typeof args === 'string' ? JSON.parse(args) : args;
+          break;
+        }
+      }
+    }
+    // Path 4: Analysis/transcript fallback
+    else if (body.call?.analysis || body.call?.transcript) {
+      console.log('[VAPI Inbound] Path 4: Using analysis/transcript');
+      const analysis = body.call.analysis || {};
+      leadParams = analysis.successEvaluationVariables || {};
+    }
+
+    console.log('[VAPI Inbound] Extracted lead parameters:', JSON.stringify(leadParams, null, 2));
 
     // Apply defaults and transformations - be forgiving, capture every lead
     const processedData = {
