@@ -9,37 +9,51 @@ export async function POST(request: NextRequest) {
 
     console.log('[VAPI Inbound] Received webhook payload:', JSON.stringify(body, null, 2));
 
-    // Extract call information
+    // VAPI can send either:
+    // 1. Function call with structured data (preferred)
+    // 2. End-of-call webhook with analysis variables (fallback)
+
     const message = body.message || body;
     const call = message.call || body.call || {};
     const callId = call.id || 'unknown';
     const customerPhone = call.customer?.number || '';
 
-    // VAPI sends assistant messages and analysis in the messages array
-    // Look for the assistant's collected information in the last assistant message
-    const messages = message.messages || call.messages || [];
-    const transcript = message.transcript || '';
+    // Check if this is a function call with structured data
+    const functionCall = message.functionCall || body.functionCall;
+    let leadParams: any = {};
 
-    // Extract variables that the assistant collected
-    // VAPI stores these in call.analysis or as assistant variables
-    const analysis = call.analysis || {};
-    const variables = analysis.successEvaluationVariables || {};
+    if (functionCall && functionCall.name === 'submit_lead') {
+      // Structured data from function call (best option)
+      console.log('[VAPI Inbound] Using structured function call data');
+      leadParams = functionCall.parameters || {};
+    } else {
+      // Fallback: Extract from analysis variables or transcript
+      console.log('[VAPI Inbound] Using analysis variables (fallback)');
+      const messages = message.messages || call.messages || [];
+      const transcript = message.transcript || call.transcript || '';
+      const analysis = call.analysis || {};
+      leadParams = analysis.successEvaluationVariables || {};
 
-    console.log('[VAPI Inbound] Analysis variables:', variables);
-    console.log('[VAPI Inbound] Messages count:', messages.length);
+      // If still no data, try to extract from transcript
+      if (!leadParams.departure && !leadParams.destination) {
+        leadParams.departure = extractFromTranscript(transcript, 'from');
+        leadParams.destination = extractFromTranscript(transcript, 'to');
+      }
+    }
 
-    // Parse collected data from VAPI assistant
-    // Your assistant collects: departure, destination, date_time, passengers, name, phone, email, special_requirements
+    console.log('[VAPI Inbound] Lead parameters:', leadParams);
+
+    // Map VAPI parameters to our lead structure
     const leadData = {
-      from_airport_or_city: variables.departure || variables.from || extractFromTranscript(transcript, 'from'),
-      to_airport_or_city: variables.destination || variables.to || extractFromTranscript(transcript, 'to'),
-      date_time: variables.date_time || variables.departure_date || 'To be confirmed',
-      pax: parseInt(variables.passengers || variables.pax || '1', 10),
-      name: variables.name || variables.caller_name || 'Phone Lead',
-      phone: variables.phone || variables.callback_number || customerPhone || 'Unknown',
-      email: variables.email || 'noemail@phonelead.com',
+      from_airport_or_city: leadParams.departure || leadParams.from || 'To be confirmed',
+      to_airport_or_city: leadParams.destination || leadParams.to || 'To be confirmed',
+      date_time: leadParams.date_time || leadParams.departure_date || 'To be confirmed',
+      pax: parseInt(leadParams.passengers || leadParams.pax || '1', 10),
+      name: leadParams.name || leadParams.caller_name || 'Phone Lead',
+      phone: leadParams.phone || leadParams.callback_number || customerPhone || 'Unknown',
+      email: leadParams.email || 'noemail@phonelead.com',
       urgency: 'urgent' as const,
-      notes: buildNotes(callId, variables.special_requirements, variables.urgency, transcript),
+      notes: buildNotes(callId, leadParams.special_requirements, leadParams.urgency, call.transcript),
     };
 
     console.log('[VAPI Inbound] Extracted lead data:', leadData);
