@@ -32,10 +32,15 @@ export async function POST(request: NextRequest) {
 
     console.log('[Leads API] Lead saved:', lead.id);
 
-    // Send notifications (non-blocking)
-    sendNotifications(lead).catch((error) => {
-      console.error('Notification error:', error);
-    });
+    // Send notifications (blocking - wait for completion)
+    try {
+      console.log('[Leads API] Starting notifications...');
+      await sendNotifications(lead);
+      console.log('[Leads API] Notifications completed');
+    } catch (error) {
+      console.error('[Leads API] Notification error (continuing anyway):', error);
+      // Don't fail the request if notifications fail
+    }
 
     return NextResponse.json(
       { success: true, leadId: lead.id },
