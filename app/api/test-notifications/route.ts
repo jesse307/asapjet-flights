@@ -1,7 +1,19 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { sendNotifications } from '@/lib/notifications';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  // In production, require admin password
+  if (process.env.NODE_ENV === 'production') {
+    const authHeader = request.headers.get('authorization');
+    const expectedAuth = `Bearer ${process.env.ADMIN_PASSWORD}`;
+
+    if (!authHeader || authHeader !== expectedAuth) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+  }
   const testLead = {
     id: 'test-' + Date.now(),
     name: 'Test User',

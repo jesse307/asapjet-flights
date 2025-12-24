@@ -1,6 +1,19 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  // Protect test endpoint - require admin auth in production
+  if (process.env.NODE_ENV === 'production') {
+    const authHeader = request.headers.get('authorization');
+    const adminPassword = process.env.ADMIN_PASSWORD;
+
+    if (!authHeader || !authHeader.startsWith('Bearer ') || authHeader.substring(7) !== adminPassword) {
+      return NextResponse.json(
+        { error: 'Unauthorized - admin password required for test endpoints' },
+        { status: 401 }
+      );
+    }
+  }
+
   const config = {
     hasVapiKey: !!process.env.VAPI_API_KEY,
     hasPhoneNumberId: !!process.env.VAPI_PHONE_NUMBER_ID,
