@@ -53,6 +53,7 @@ async function sendEmailNotification(lead: Lead): Promise<void> {
   try {
     console.log('[Email] Initializing Resend with key:', process.env.RESEND_API_KEY?.substring(0, 10) + '...');
     const resend = new Resend(process.env.RESEND_API_KEY!);
+    console.log('[Email] Resend client created');
 
     const urgencyLabel = lead.urgency === 'critical' ? '🚨 CRITICAL' : lead.urgency === 'urgent' ? '⚡ URGENT' : 'Normal';
 
@@ -108,9 +109,11 @@ async function sendVapiNotification(lead: Lead): Promise<void> {
     // Create the assistant message for VAPI
     const assistantMessage = `Hi, this is an automated notification from ASAP Jet. You have a new ${urgencyLabel} priority charter lead. Passenger name: ${lead.name}. Route: ${lead.from_airport_or_city} to ${lead.to_airport_or_city}. Departure: ${lead.date_time}. Number of passengers: ${lead.pax}. Contact phone: ${lead.phone}. Contact email: ${lead.email}. ${lead.notes ? `Additional notes: ${lead.notes}.` : ''} This lead was submitted at ${new Date(lead.timestamp).toLocaleString()}. Lead ID: ${lead.id}. You can view full details in your admin dashboard. Thank you.`;
 
-    // Make VAPI API call to initiate phone call with 8 second timeout
+    // Make VAPI API call to initiate phone call with 15 second timeout
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 8000);
+    const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+    console.log('[VAPI] Starting fetch to VAPI API...');
 
     try {
       const response = await fetch('https://api.vapi.ai/call/phone', {
@@ -151,9 +154,11 @@ async function sendVapiNotification(lead: Lead): Promise<void> {
       });
 
       clearTimeout(timeoutId);
+      console.log('[VAPI] Fetch completed, status:', response.status);
 
       if (!response.ok) {
         const errorText = await response.text();
+        console.error('[VAPI] API error response:', errorText);
         throw new Error(`VAPI API failed: ${response.status} - ${errorText}`);
       }
 
@@ -166,8 +171,9 @@ async function sendVapiNotification(lead: Lead): Promise<void> {
       }
     } catch (fetchError) {
       clearTimeout(timeoutId);
+      console.error('[VAPI] Fetch error:', fetchError);
       if (fetchError instanceof Error && fetchError.name === 'AbortError') {
-        throw new Error('VAPI API request timed out after 8 seconds');
+        throw new Error('VAPI API request timed out after 15 seconds');
       }
       throw fetchError;
     }
