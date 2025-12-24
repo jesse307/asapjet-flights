@@ -103,58 +103,73 @@ async function sendVapiNotification(lead: Lead): Promise<void> {
     const urgencyLabel = lead.urgency === 'critical' ? 'CRITICAL' : lead.urgency === 'urgent' ? 'URGENT' : 'standard';
 
     console.log('[VAPI] Initiating call to:', process.env.VAPI_NOTIFY_PHONE);
+    console.log('[VAPI] Using phone number ID:', process.env.VAPI_PHONE_NUMBER_ID);
 
     // Create the assistant message for VAPI
     const assistantMessage = `Hi, this is an automated notification from ASAP Jet. You have a new ${urgencyLabel} priority charter lead. Passenger name: ${lead.name}. Route: ${lead.from_airport_or_city} to ${lead.to_airport_or_city}. Departure: ${lead.date_time}. Number of passengers: ${lead.pax}. Contact phone: ${lead.phone}. Contact email: ${lead.email}. ${lead.notes ? `Additional notes: ${lead.notes}.` : ''} This lead was submitted at ${new Date(lead.timestamp).toLocaleString()}. Lead ID: ${lead.id}. You can view full details in your admin dashboard. Thank you.`;
 
-    // Make VAPI API call to initiate phone call
-    const response = await fetch('https://api.vapi.ai/call/phone', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${process.env.VAPI_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        phoneNumberId: process.env.VAPI_PHONE_NUMBER_ID,
-        customer: {
-          number: process.env.VAPI_NOTIFY_PHONE,
+    // Make VAPI API call to initiate phone call with 8 second timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
+
+    try {
+      const response = await fetch('https://api.vapi.ai/call/phone', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${process.env.VAPI_API_KEY}`,
+          'Content-Type': 'application/json',
         },
-        assistant: {
-          firstMessage: assistantMessage,
-          model: {
-            provider: 'openai',
-            model: 'gpt-3.5-turbo',
-            messages: [
-              {
-                role: 'system',
-                content: 'You are a professional notification assistant for ASAP Jet. Deliver the notification message clearly and professionally. After delivering the message, confirm the listener understood and end the call politely.'
-              }
-            ]
+        body: JSON.stringify({
+          phoneNumberId: process.env.VAPI_PHONE_NUMBER_ID,
+          customer: {
+            number: process.env.VAPI_NOTIFY_PHONE,
           },
-          voice: {
-            provider: '11labs',
-            voiceId: 'rachel'
+          assistant: {
+            firstMessage: assistantMessage,
+            model: {
+              provider: 'openai',
+              model: 'gpt-3.5-turbo',
+              messages: [
+                {
+                  role: 'system',
+                  content: 'You are a professional notification assistant for ASAP Jet. Deliver the notification message clearly and professionally. After delivering the message, confirm the listener understood and end the call politely.'
+                }
+              ]
+            },
+            voice: {
+              provider: '11labs',
+              voiceId: 'rachel'
+            }
+          },
+          metadata: {
+            leadId: lead.id,
+            urgency: lead.urgency,
+            passengerName: lead.name
           }
-        },
-        metadata: {
-          leadId: lead.id,
-          urgency: lead.urgency,
-          passengerName: lead.name
-        }
-      }),
-    });
+        }),
+        signal: controller.signal,
+      });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`VAPI API failed: ${response.status} - ${errorText}`);
-    }
+      clearTimeout(timeoutId);
 
-    const data = await response.json();
-    console.log('[VAPI] Call initiated successfully. Call ID:', data.id);
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`VAPI API failed: ${response.status} - ${errorText}`);
+      }
 
-    // Log the call to Supabase
-    if (data.id) {
-      await logCall(lead.id, data.id, 'initiated');
+      const data = await response.json();
+      console.log('[VAPI] Call initiated successfully. Call ID:', data.id);
+
+      // Log the call to Supabase
+      if (data.id) {
+        await logCall(lead.id, data.id, 'initiated');
+      }
+    } catch (fetchError) {
+      clearTimeout(timeoutId);
+      if (fetchError instanceof Error && fetchError.name === 'AbortError') {
+        throw new Error('VAPI API request timed out after 8 seconds');
+      }
+      throw fetchError;
     }
 
   } catch (error) {
