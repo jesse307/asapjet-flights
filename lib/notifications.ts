@@ -1,39 +1,57 @@
 import { Lead } from '@/types/lead';
 import { Resend } from 'resend';
+import { supabaseAdmin } from '@/lib/supabase';
+import type { Agent } from '@/types/agent';
 
 export async function sendNotifications(lead: Lead): Promise<void> {
   const promises: Promise<void>[] = [];
 
   console.log('[Notifications] Starting notifications for lead:', lead.id);
 
-  // Email notification
-  if (process.env.RESEND_API_KEY && process.env.LEADS_NOTIFY_EMAIL_TO && process.env.LEADS_NOTIFY_EMAIL_FROM) {
-    console.log('[Notifications] Email notification enabled');
-    promises.push(sendEmailNotification(lead));
+  // Get on-call agent from database
+  const { data: onCallAgent, error: agentError } = await supabaseAdmin
+    .from('agents')
+    .select('*')
+    .eq('on_call', true)
+    .eq('active', true)
+    .single();
+
+  if (agentError || !onCallAgent) {
+    console.warn('[Notifications] No on-call agent found, falling back to env vars');
   } else {
-    console.warn('[Notifications] Email notification skipped - missing env vars:', {
+    console.log('[Notifications] On-call agent:', onCallAgent.name, onCallAgent.email);
+  }
+
+  // Email notification - use on-call agent or fallback to env vars
+  const emailTo = onCallAgent?.email || process.env.LEADS_NOTIFY_EMAIL_TO;
+  if (process.env.RESEND_API_KEY && emailTo && process.env.LEADS_NOTIFY_EMAIL_FROM) {
+    console.log('[Notifications] Email notification enabled, sending to:', emailTo);
+    promises.push(sendEmailNotification(lead, emailTo));
+  } else {
+    console.warn('[Notifications] Email notification skipped - missing config:', {
       hasResendKey: !!process.env.RESEND_API_KEY,
-      hasEmailTo: !!process.env.LEADS_NOTIFY_EMAIL_TO,
+      hasEmailTo: !!emailTo,
       hasEmailFrom: !!process.env.LEADS_NOTIFY_EMAIL_FROM
     });
   }
 
-  // VAPI voice notification
-  if (process.env.VAPI_API_KEY && process.env.VAPI_PHONE_NUMBER_ID && process.env.VAPI_NOTIFY_PHONE) {
-    console.log('[Notifications] VAPI voice notification enabled');
-    promises.push(sendVapiNotification(lead));
+  // VAPI voice notification - use on-call agent or fallback to env vars
+  const notifyPhone = onCallAgent?.phone || process.env.VAPI_NOTIFY_PHONE;
+  if (process.env.VAPI_API_KEY && process.env.VAPI_PHONE_NUMBER_ID && notifyPhone) {
+    console.log('[Notifications] VAPI voice notification enabled, calling:', notifyPhone);
+    promises.push(sendVapiNotification(lead, notifyPhone));
   } else {
-    console.warn('[Notifications] VAPI voice notification skipped - missing env vars:', {
+    console.warn('[Notifications] VAPI voice notification skipped - missing config:', {
       hasVapiKey: !!process.env.VAPI_API_KEY,
       hasPhoneNumberId: !!process.env.VAPI_PHONE_NUMBER_ID,
-      hasNotifyPhone: !!process.env.VAPI_NOTIFY_PHONE
+      hasNotifyPhone: !!notifyPhone
     });
   }
 
   // Webhook notification
   if (process.env.N8N_WEBHOOK_URL) {
     console.log('[Notifications] Webhook notification enabled');
-    promises.push(sendWebhookNotification(lead));
+    promises.push(sendWebhookNotification(lead, onCallAgent));
   } else {
     console.warn('[Notifications] Webhook notification skipped - N8N_WEBHOOK_URL not set');
   }
@@ -49,7 +67,7 @@ export async function sendNotifications(lead: Lead): Promise<void> {
   console.log('[Notifications] All notifications processed');
 }
 
-async function sendEmailNotification(lead: Lead): Promise<void> {
+async function sendEmailNotification(lead: Lead, emailTo: string): Promise<void> {
   try {
     console.log('[Email] Initializing Resend with key:', process.env.RESEND_API_KEY?.substring(0, 10) + '...');
     const resend = new Resend(process.env.RESEND_API_KEY!);
@@ -57,11 +75,11 @@ async function sendEmailNotification(lead: Lead): Promise<void> {
 
     const urgencyLabel = lead.urgency === 'critical' ? '🚨 CRITICAL' : lead.urgency === 'urgent' ? '⚡ URGENT' : 'Normal';
 
-    console.log('[Email] Sending email from:', process.env.LEADS_NOTIFY_EMAIL_FROM, 'to:', process.env.LEADS_NOTIFY_EMAIL_TO);
+    console.log('[Email] Sending email from:', process.env.LEADS_NOTIFY_EMAIL_FROM, 'to:', emailTo);
 
     const result = await resend.emails.send({
       from: process.env.LEADS_NOTIFY_EMAIL_FROM!,
-      to: process.env.LEADS_NOTIFY_EMAIL_TO!,
+      to: emailTo,
       subject: `New ASAP Jet Lead - ${urgencyLabel} - ${lead.name}`,
       text: `
 New Charter Lead Received
@@ -99,11 +117,11 @@ Lead ID: ${lead.id}
   }
 }
 
-async function sendVapiNotification(lead: Lead): Promise<void> {
+async function sendVapiNotification(lead: Lead, notifyPhone: string): Promise<void> {
   try {
     const urgencyLabel = lead.urgency === 'critical' ? 'CRITICAL' : lead.urgency === 'urgent' ? 'URGENT' : 'standard';
 
-    console.log('[VAPI] Initiating call to:', process.env.VAPI_NOTIFY_PHONE);
+    console.log('[VAPI] Initiating call to:', notifyPhone);
     console.log('[VAPI] Using phone number ID:', process.env.VAPI_PHONE_NUMBER_ID);
 
     // Create the assistant message for VAPI
@@ -125,7 +143,7 @@ async function sendVapiNotification(lead: Lead): Promise<void> {
         body: JSON.stringify({
           phoneNumberId: process.env.VAPI_PHONE_NUMBER_ID,
           customer: {
-            number: process.env.VAPI_NOTIFY_PHONE,
+            number: notifyPhone,
           },
           assistant: {
             firstMessage: assistantMessage,
@@ -224,7 +242,7 @@ async function logCall(leadId: string, callId: string, status: string): Promise<
   }
 }
 
-async function sendWebhookNotification(lead: Lead): Promise<void> {
+async function sendWebhookNotification(lead: Lead, onCallAgent: Agent | null): Promise<void> {
   try {
     console.log('[Webhook] Sending to:', process.env.N8N_WEBHOOK_URL);
     const response = await fetch(process.env.N8N_WEBHOOK_URL!, {
@@ -232,7 +250,14 @@ async function sendWebhookNotification(lead: Lead): Promise<void> {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(lead),
+      body: JSON.stringify({
+        ...lead,
+        onCallAgent: onCallAgent ? {
+          name: onCallAgent.name,
+          email: onCallAgent.email,
+          phone: onCallAgent.phone,
+        } : null,
+      }),
     });
 
     if (!response.ok) {
