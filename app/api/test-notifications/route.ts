@@ -22,6 +22,7 @@ export async function GET(request: NextRequest) {
     from_airport_or_city: 'LAX',
     to_airport_or_city: 'JFK',
     date_time: '2025-01-15T14:00',
+    trip_type: 'one-way' as const,
     pax: 2,
     urgency: 'urgent' as const,
     notes: 'This is a test notification',

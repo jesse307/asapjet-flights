@@ -36,6 +36,18 @@ export default function LeadForm() {
       notes: formData.get('notes') as string || undefined,
     };
 
+    // Validate return date is after departure date for round-trip
+    if (data.trip_type === 'round-trip' && data.return_date_time) {
+      const departureDate = new Date(data.date_time);
+      const returnDate = new Date(data.return_date_time);
+
+      if (returnDate <= departureDate) {
+        setError('Return date must be after departure date.');
+        setIsSubmitting(false);
+        return;
+      }
+    }
+
     try {
       const response = await fetch('/api/leads', {
         method: 'POST',
@@ -103,8 +115,8 @@ export default function LeadForm() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2">Trip Type *</label>
-            <div className="flex space-x-6">
+            <label className="block text-sm font-medium mb-2" id="trip-type-label">Trip Type *</label>
+            <div className="flex space-x-6" role="radiogroup" aria-labelledby="trip-type-label">
               <div className="flex items-center">
                 <input
                   id="one-way"
@@ -114,8 +126,9 @@ export default function LeadForm() {
                   className="h-4 w-4 border-gray-300 text-[#ff6b35] focus:ring-[#ff6b35]"
                   checked={tripType === 'one-way'}
                   onChange={() => setTripType('one-way')}
+                  aria-label="One way trip"
                 />
-                <label htmlFor="one-way" className="ml-2 text-sm font-medium">
+                <label htmlFor="one-way" className="ml-2 text-sm font-medium cursor-pointer">
                   One Way
                 </label>
               </div>
@@ -128,29 +141,32 @@ export default function LeadForm() {
                   className="h-4 w-4 border-gray-300 text-[#ff6b35] focus:ring-[#ff6b35]"
                   checked={tripType === 'round-trip'}
                   onChange={() => setTripType('round-trip')}
+                  aria-label="Round trip"
                 />
-                <label htmlFor="round-trip" className="ml-2 text-sm font-medium">
+                <label htmlFor="round-trip" className="ml-2 text-sm font-medium cursor-pointer">
                   Round Trip
                 </label>
               </div>
             </div>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-6">
-            <div>
-              <label htmlFor="date_time" className="block text-sm font-medium mb-2">
-                Departure Date & Time *
-              </label>
-              <input
-                type="datetime-local"
-                id="date_time"
-                name="date_time"
-                required
-                className="w-full px-4 py-3 bg-[#1a1a1a] border border-gray-700 rounded-lg focus:outline-none focus:border-[#ff6b35] text-white"
-              />
-            </div>
-            {tripType === 'round-trip' && (
+          <div className="space-y-6">
+            <div className="grid md:grid-cols-2 gap-6">
               <div>
+                <label htmlFor="date_time" className="block text-sm font-medium mb-2">
+                  Departure Date & Time *
+                </label>
+                <input
+                  type="datetime-local"
+                  id="date_time"
+                  name="date_time"
+                  required
+                  className="w-full px-4 py-3 bg-[#1a1a1a] border border-gray-700 rounded-lg focus:outline-none focus:border-[#ff6b35] text-white [color-scheme:dark]"
+                  aria-describedby={tripType === 'round-trip' ? 'return-date-info' : undefined}
+                />
+              </div>
+
+              <div className={`transition-all duration-300 ease-in-out ${tripType === 'round-trip' ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
                 <label htmlFor="return_date_time" className="block text-sm font-medium mb-2">
                   Return Date & Time *
                 </label>
@@ -158,14 +174,20 @@ export default function LeadForm() {
                   type="datetime-local"
                   id="return_date_time"
                   name="return_date_time"
-                  required
-                  className="w-full px-4 py-3 bg-[#1a1a1a] border border-gray-700 rounded-lg focus:outline-none focus:border-[#ff6b35] text-white"
+                  required={tripType === 'round-trip'}
+                  disabled={tripType === 'one-way'}
+                  className="w-full px-4 py-3 bg-[#1a1a1a] border border-gray-700 rounded-lg focus:outline-none focus:border-[#ff6b35] text-white [color-scheme:dark] disabled:opacity-50"
+                  aria-describedby="return-date-info"
                 />
+                <p id="return-date-info" className="sr-only">
+                  Return date must be after departure date
+                </p>
               </div>
-            )}
-            <div>
+            </div>
+
+            <div className="max-w-sm">
               <label htmlFor="pax" className="block text-sm font-medium mb-2">
-                Passengers *
+                Number of Passengers *
               </label>
               <input
                 type="number"
@@ -176,6 +198,7 @@ export default function LeadForm() {
                 max="50"
                 defaultValue="1"
                 className="w-full px-4 py-3 bg-[#1a1a1a] border border-gray-700 rounded-lg focus:outline-none focus:border-[#ff6b35] text-white"
+                aria-label="Number of passengers, between 1 and 50"
               />
             </div>
           </div>

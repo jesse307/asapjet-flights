@@ -53,6 +53,8 @@ export async function POST(request: NextRequest) {
       from_airport_or_city: leadParams.from_airport_or_city || leadParams.departure || 'Not provided',
       to_airport_or_city: leadParams.to_airport_or_city || leadParams.destination || 'Not provided',
       date_time: leadParams.date_time || leadParams.departure_date || 'To be confirmed',
+      trip_type: (leadParams.trip_type as 'one-way' | 'round-trip') || 'one-way',
+      return_date_time: leadParams.return_date_time || undefined,
       pax: typeof leadParams.pax === 'string' ? parseInt(leadParams.pax, 10) : (leadParams.pax || 1),
       name: leadParams.name || 'Phone Lead',
       phone: leadParams.phone || 'Not provided',
