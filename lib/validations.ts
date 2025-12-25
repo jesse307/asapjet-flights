@@ -5,6 +5,8 @@ export const leadSchema = z.object({
   from_airport_or_city: z.string().min(1).max(100),
   to_airport_or_city: z.string().min(1).max(100),
   date_time: z.string().min(1),
+  trip_type: z.enum(['one-way', 'round-trip']).default('one-way'),
+  return_date_time: z.string().optional(),
   pax: z.number().int().min(1).max(50),
   name: z.string().min(1).max(100),
   phone: z.string().min(1).max(50), // Relaxed from 10 chars to accept any format

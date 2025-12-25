@@ -14,6 +14,7 @@ export default function LeadForm() {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [tripType, setTripType] = useState<'one-way' | 'round-trip'>('one-way');
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -25,6 +26,8 @@ export default function LeadForm() {
       from_airport_or_city: formData.get('from_airport_or_city') as string,
       to_airport_or_city: formData.get('to_airport_or_city') as string,
       date_time: formData.get('date_time') as string,
+      trip_type: formData.get('trip_type') as 'one-way' | 'round-trip',
+      return_date_time: formData.get('return_date_time') as string || undefined,
       pax: parseInt(formData.get('pax') as string, 10),
       name: formData.get('name') as string,
       phone: formData.get('phone') as string,
@@ -99,6 +102,40 @@ export default function LeadForm() {
             </div>
           </div>
 
+          <div>
+            <label className="block text-sm font-medium mb-2">Trip Type *</label>
+            <div className="flex space-x-6">
+              <div className="flex items-center">
+                <input
+                  id="one-way"
+                  type="radio"
+                  value="one-way"
+                  name="trip_type"
+                  className="h-4 w-4 border-gray-300 text-[#ff6b35] focus:ring-[#ff6b35]"
+                  checked={tripType === 'one-way'}
+                  onChange={() => setTripType('one-way')}
+                />
+                <label htmlFor="one-way" className="ml-2 text-sm font-medium">
+                  One Way
+                </label>
+              </div>
+              <div className="flex items-center">
+                <input
+                  id="round-trip"
+                  type="radio"
+                  value="round-trip"
+                  name="trip_type"
+                  className="h-4 w-4 border-gray-300 text-[#ff6b35] focus:ring-[#ff6b35]"
+                  checked={tripType === 'round-trip'}
+                  onChange={() => setTripType('round-trip')}
+                />
+                <label htmlFor="round-trip" className="ml-2 text-sm font-medium">
+                  Round Trip
+                </label>
+              </div>
+            </div>
+          </div>
+
           <div className="grid md:grid-cols-2 gap-6">
             <div>
               <label htmlFor="date_time" className="block text-sm font-medium mb-2">
@@ -112,7 +149,20 @@ export default function LeadForm() {
                 className="w-full px-4 py-3 bg-[#1a1a1a] border border-gray-700 rounded-lg focus:outline-none focus:border-[#ff6b35] text-white"
               />
             </div>
-
+            {tripType === 'round-trip' && (
+              <div>
+                <label htmlFor="return_date_time" className="block text-sm font-medium mb-2">
+                  Return Date & Time *
+                </label>
+                <input
+                  type="datetime-local"
+                  id="return_date_time"
+                  name="return_date_time"
+                  required
+                  className="w-full px-4 py-3 bg-[#1a1a1a] border border-gray-700 rounded-lg focus:outline-none focus:border-[#ff6b35] text-white"
+                />
+              </div>
+            )}
             <div>
               <label htmlFor="pax" className="block text-sm font-medium mb-2">
                 Passengers *

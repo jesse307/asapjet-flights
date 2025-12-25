@@ -6,6 +6,8 @@ export type Lead = {
   from_airport_or_city: string;
   to_airport_or_city: string;
   date_time: string;
+  trip_type: 'one-way' | 'round-trip';
+  return_date_time?: string;
   pax: number;
   name: string;
   phone: string;
