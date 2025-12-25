@@ -84,7 +84,7 @@ export default function LeadForm() {
         </h2>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid md:grid-cols-2 gap-6">
+          <div className="grid md:grid-cols-3 gap-6">
             <div>
               <label htmlFor="from_airport_or_city" className="block text-sm font-medium mb-2">
                 From (Airport or City) *
@@ -110,6 +110,23 @@ export default function LeadForm() {
                 required
                 className="w-full px-4 py-3 bg-[#1a1a1a] border border-gray-700 rounded-lg focus:outline-none focus:border-[#ff6b35] text-white"
                 placeholder="e.g., JFK or New York"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="pax" className="block text-sm font-medium mb-2">
+                Passengers *
+              </label>
+              <input
+                type="number"
+                id="pax"
+                name="pax"
+                required
+                min="1"
+                max="99"
+                defaultValue="1"
+                className="w-full px-4 py-3 bg-[#1a1a1a] border border-gray-700 rounded-lg focus:outline-none focus:border-[#ff6b35] text-white"
+                aria-label="Number of passengers, between 1 and 99"
               />
             </div>
           </div>
@@ -183,23 +200,6 @@ export default function LeadForm() {
                   Return date must be after departure date
                 </p>
               </div>
-            </div>
-
-            <div className="max-w-sm">
-              <label htmlFor="pax" className="block text-sm font-medium mb-2">
-                Number of Passengers *
-              </label>
-              <input
-                type="number"
-                id="pax"
-                name="pax"
-                required
-                min="1"
-                max="50"
-                defaultValue="1"
-                className="w-full px-4 py-3 bg-[#1a1a1a] border border-gray-700 rounded-lg focus:outline-none focus:border-[#ff6b35] text-white"
-                aria-label="Number of passengers, between 1 and 50"
-              />
             </div>
           </div>
 
