@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 import { verifyAdminPassword } from '@/lib/auth';
+import { sendOnCallNotification } from '@/lib/agent-notifications';
 import type { Agent, AgentInput } from '@/types/agent';
 
 // GET /api/admin/agents - List all agents
@@ -87,6 +88,11 @@ export async function POST(request: NextRequest) {
       }
 
       return NextResponse.json({ error: 'Failed to create agent' }, { status: 500 });
+    }
+
+    // Send on-call notification if agent is being placed on call
+    if (agent.on_call) {
+      await sendOnCallNotification(agent);
     }
 
     return NextResponse.json({ agent }, { status: 201 });

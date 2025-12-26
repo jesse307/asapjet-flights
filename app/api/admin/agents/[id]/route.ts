@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 import { verifyAdminPassword } from '@/lib/auth';
+import { sendOnCallNotification } from '@/lib/agent-notifications';
 import type { AgentUpdate } from '@/types/agent';
 
 type RouteContext = {
@@ -83,6 +84,11 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       }
       console.error('[Agent API] Error updating agent:', error);
       return NextResponse.json({ error: 'Failed to update agent' }, { status: 500 });
+    }
+
+    // Send on-call notification if agent is being placed on call
+    if (body.on_call === true) {
+      await sendOnCallNotification(agent);
     }
 
     return NextResponse.json({ agent });
