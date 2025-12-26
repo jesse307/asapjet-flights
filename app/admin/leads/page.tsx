@@ -143,6 +143,7 @@ export default function AdminLeadsPage() {
                   <th className="px-4 py-3 text-left text-sm font-semibold">Route</th>
                   <th className="px-4 py-3 text-left text-sm font-semibold">Date/Time</th>
                   <th className="px-4 py-3 text-left text-sm font-semibold">PAX</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold">Agent</th>
                   <th className="px-4 py-3 text-left text-sm font-semibold">Contact</th>
                   <th className="px-4 py-3 text-left text-sm font-semibold">Actions</th>
                 </tr>
@@ -172,6 +173,13 @@ export default function AdminLeadsPage() {
                     </td>
                     <td className="px-4 py-3 text-sm">{lead.date_time}</td>
                     <td className="px-4 py-3 text-sm">{lead.pax}</td>
+                    <td className="px-4 py-3 text-sm">
+                      {lead.assigned_agent_name ? (
+                        <span className="text-[#ff6b35]">{lead.assigned_agent_name}</span>
+                      ) : (
+                        <span className="text-gray-500 italic">Unassigned</span>
+                      )}
+                    </td>
                     <td className="px-4 py-3 text-sm">
                       <div className="text-xs">
                         <a href={`tel:${lead.phone}`} className="text-[#ff6b35] hover:underline block">
@@ -235,6 +243,17 @@ export default function AdminLeadsPage() {
                     >
                       {selectedLead.urgency.toUpperCase()}
                     </span>
+                  </div>
+
+                  <div>
+                    <div className="text-sm text-gray-400 mb-1">Assigned Agent</div>
+                    <div>
+                      {selectedLead.assigned_agent_name ? (
+                        <span className="text-[#ff6b35] font-medium">{selectedLead.assigned_agent_name}</span>
+                      ) : (
+                        <span className="text-gray-500 italic">Unassigned</span>
+                      )}
+                    </div>
                   </div>
 
                   <div className="grid md:grid-cols-2 gap-4">

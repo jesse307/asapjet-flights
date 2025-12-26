@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { Lead, LeadInput } from '@/types/lead';
+import type { Agent } from '@/types/agent';
 
 // Get Supabase credentials from environment (check both prefixed and non-prefixed)
 const supabaseUrl = process.env.NEXT_PUBLIC_asapflight_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -19,14 +20,29 @@ if (!supabaseUrl || !supabaseServiceKey) {
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 export async function saveLead(lead: LeadInput): Promise<Lead> {
+  // Get the on-call agent
+  const { data: onCallAgent } = await supabase
+    .from('agents')
+    .select('id, name')
+    .eq('on_call', true)
+    .eq('active', true)
+    .single();
+
+  const leadData = {
+    ...lead,
+    timestamp: new Date().toISOString(),
+    assigned_agent_id: onCallAgent?.id,
+    assigned_agent_name: onCallAgent?.name,
+  };
+
+  console.log('[Leads Store] Saving lead with agent assignment:', {
+    agentId: onCallAgent?.id,
+    agentName: onCallAgent?.name,
+  });
+
   const { data, error } = await supabase
     .from('leads')
-    .insert([
-      {
-        ...lead,
-        timestamp: new Date().toISOString(),
-      }
-    ])
+    .insert([leadData])
     .select()
     .single();
 

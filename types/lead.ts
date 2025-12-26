@@ -14,6 +14,8 @@ export type Lead = {
   email: string;
   urgency: Urgency;
   notes?: string;
+  assigned_agent_id?: string;
+  assigned_agent_name?: string;
 };
 
 export type LeadInput = Omit<Lead, 'id' | 'timestamp'>;
