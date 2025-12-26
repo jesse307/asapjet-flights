@@ -151,7 +151,7 @@ export default function AdminLeadsPage() {
                 {leads.map((lead) => (
                   <tr key={lead.id} className="border-t border-gray-700 hover:bg-[#242424]">
                     <td className="px-4 py-3 text-sm">
-                      {new Date(lead.timestamp).toLocaleString()}
+                      {new Date(lead.timestamp).toLocaleString('en-US', { timeZone: 'America/New_York' })}
                     </td>
                     <td className="px-4 py-3 text-sm">
                       <span
@@ -219,7 +219,7 @@ export default function AdminLeadsPage() {
 
                   <div>
                     <div className="text-sm text-gray-400 mb-1">Submitted</div>
-                    <div>{new Date(selectedLead.timestamp).toLocaleString()}</div>
+                    <div>{new Date(selectedLead.timestamp).toLocaleString('en-US', { timeZone: 'America/New_York' })} EST</div>
                   </div>
 
                   <div>
@@ -314,18 +314,18 @@ export default function AdminLeadsPage() {
                             <div className="grid grid-cols-2 gap-2 text-xs">
                               <div>
                                 <span className="text-gray-400">Initiated:</span>{' '}
-                                {new Date(log.timestamp).toLocaleString()}
+                                {new Date(log.timestamp).toLocaleString('en-US', { timeZone: 'America/New_York' })}
                               </div>
                               {log.started_at && (
                                 <div>
                                   <span className="text-gray-400">Started:</span>{' '}
-                                  {new Date(log.started_at).toLocaleString()}
+                                  {new Date(log.started_at).toLocaleString('en-US', { timeZone: 'America/New_York' })}
                                 </div>
                               )}
                               {log.ended_at && (
                                 <div>
                                   <span className="text-gray-400">Ended:</span>{' '}
-                                  {new Date(log.ended_at).toLocaleString()}
+                                  {new Date(log.ended_at).toLocaleString('en-US', { timeZone: 'America/New_York' })}
                                 </div>
                               )}
                               {log.duration && (
