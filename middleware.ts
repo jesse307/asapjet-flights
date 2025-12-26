@@ -35,7 +35,7 @@ function checkRateLimit(key: string, max: number, windowMs: number): boolean {
 }
 
 export function middleware(request: NextRequest) {
-  const { pathname} = request.nextUrl;
+  const { pathname } = request.nextUrl;
 
   // Apply rate limiting to specific endpoints
   for (const [path, limit] of Object.entries(RATE_LIMITS)) {
@@ -44,6 +44,7 @@ export function middleware(request: NextRequest) {
       const allowed = checkRateLimit(key, limit.max, limit.windowMs);
 
       if (!allowed) {
+        console.log('[Middleware] Rate limit exceeded for:', key);
         return NextResponse.json(
           { error: 'Too many requests. Please try again later.' },
           { status: 429 }
@@ -52,21 +53,9 @@ export function middleware(request: NextRequest) {
     }
   }
 
-  // Add security headers
-  const response = NextResponse.next();
-
-  response.headers.set('X-Frame-Options', 'DENY');
-  response.headers.set('X-Content-Type-Options', 'nosniff');
-  response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
-  response.headers.set('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
-
-  // CSP - Allow scripts from self and Google Ads
-  response.headers.set(
-    'Content-Security-Policy',
-    "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://www.googletagmanager.com;"
-  );
-
-  return response;
+  // Continue to the API route - let it handle the response
+  // Security headers will be added by Next.js config
+  return NextResponse.next();
 }
 
 export const config = {
