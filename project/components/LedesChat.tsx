@@ -1,6 +1,11 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import dynamic from 'next/dynamic';
+
+const LLCDocumentGenerator = dynamic(() => import('./LLCDocumentGenerator'), {
+  ssr: false,
+});
 
 interface Message {
   id: string;
@@ -11,6 +16,13 @@ interface Message {
 
 interface LedesChatProps {
   context?: 'contracts' | 'entities' | 'billing' | 'general';
+}
+
+interface LLCData {
+  homeState?: string;
+  qualifyStates?: string;
+  internalOwner?: string;
+  businessPurpose?: string;
 }
 
 export default function LedesChat({ context = 'general' }: LedesChatProps) {
@@ -32,6 +44,11 @@ export default function LedesChat({ context = 'general' }: LedesChatProps) {
 • Legal operations best practices
 • Compliance and governance advice
 
+**Create New LLCs**
+• Guided workflow to create new entities
+• Automatic document generation
+• Direct submission to CSC
+
 **Internal Knowledge**
 • Search internal documents and policies
 • Access company-specific procedures
@@ -43,6 +60,9 @@ Ask me anything about your legal operations!`,
   ]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [llcData, setLlcData] = useState<LLCData>({});
+  const [isCreatingLLC, setIsCreatingLLC] = useState(false);
+  const [showDocumentGenerator, setShowDocumentGenerator] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -52,6 +72,47 @@ Ask me anything about your legal operations!`,
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  const extractLLCDataFromMessage = (userInput: string, aiResponse: string) => {
+    const input = userInput.toLowerCase();
+    const response = aiResponse.toLowerCase();
+    const newData = { ...llcData };
+
+    // Extract home state
+    if (!newData.homeState && (response.includes('what state') || response.includes('incorporate in'))) {
+      // Next user message will be the home state
+      return { field: 'homeState', data: newData };
+    } else if (!newData.homeState && isCreatingLLC) {
+      newData.homeState = userInput;
+      return { field: 'homeState', data: newData };
+    }
+
+    // Extract qualify states
+    if (newData.homeState && !newData.qualifyStates && (response.includes('operating in') || response.includes('qualification'))) {
+      return { field: 'qualifyStates', data: newData };
+    } else if (newData.homeState && !newData.qualifyStates && isCreatingLLC) {
+      newData.qualifyStates = userInput;
+      return { field: 'qualifyStates', data: newData };
+    }
+
+    // Extract internal owner
+    if (newData.qualifyStates && !newData.internalOwner && response.includes('internal owner')) {
+      return { field: 'internalOwner', data: newData };
+    } else if (newData.qualifyStates && !newData.internalOwner && isCreatingLLC) {
+      newData.internalOwner = userInput;
+      return { field: 'internalOwner', data: newData };
+    }
+
+    // Extract business purpose
+    if (newData.internalOwner && !newData.businessPurpose && response.includes('business purpose')) {
+      return { field: 'businessPurpose', data: newData };
+    } else if (newData.internalOwner && !newData.businessPurpose && isCreatingLLC) {
+      newData.businessPurpose = userInput;
+      return { field: 'businessPurpose', data: newData };
+    }
+
+    return { field: null, data: newData };
+  };
 
   const handleSend = async () => {
     if (!input.trim()) return;
@@ -64,6 +125,7 @@ Ask me anything about your legal operations!`,
     };
 
     setMessages((prev) => [...prev, userMessage]);
+    const currentInput = input;
     setInput('');
     setIsTyping(true);
 
@@ -79,6 +141,7 @@ Ask me anything about your legal operations!`,
             content: m.content,
           })),
           context,
+          llcData: isCreatingLLC ? llcData : undefined,
         }),
       });
 
@@ -97,6 +160,26 @@ Ask me anything about your legal operations!`,
       };
 
       setMessages((prev) => [...prev, assistantMessage]);
+
+      // Handle LLC creation workflow
+      if (data.action === 'start_llc_creation') {
+        setIsCreatingLLC(true);
+        setLlcData({});
+      }
+
+      if (isCreatingLLC) {
+        const extracted = extractLLCDataFromMessage(currentInput, data.message);
+        setLlcData(extracted.data);
+
+        // Check if all data is collected
+        if (extracted.data.homeState && extracted.data.qualifyStates && extracted.data.internalOwner && extracted.data.businessPurpose) {
+          // All data collected, show document generator
+          setTimeout(() => {
+            setShowDocumentGenerator(true);
+            setIsCreatingLLC(false);
+          }, 1500);
+        }
+      }
     } catch (error) {
       console.error('Error getting AI response:', error);
 
@@ -113,8 +196,35 @@ Ask me anything about your legal operations!`,
     }
   };
 
+  const handleCloseDocumentGenerator = () => {
+    setShowDocumentGenerator(false);
+    setLlcData({});
+
+    // Add confirmation message
+    const confirmMessage: Message = {
+      id: Date.now().toString(),
+      role: 'assistant',
+      content: 'Great! I\'ve prepared your LLC formation document. Is there anything else I can help you with?',
+      timestamp: new Date(),
+    };
+    setMessages((prev) => [...prev, confirmMessage]);
+  };
+
   return (
     <>
+      {/* LLC Document Generator */}
+      {showDocumentGenerator && llcData.homeState && llcData.qualifyStates && llcData.internalOwner && llcData.businessPurpose && (
+        <LLCDocumentGenerator
+          llcData={{
+            homeState: llcData.homeState,
+            qualifyStates: llcData.qualifyStates,
+            internalOwner: llcData.internalOwner,
+            businessPurpose: llcData.businessPurpose,
+          }}
+          onClose={handleCloseDocumentGenerator}
+        />
+      )}
+
       {/* Floating Chat Button */}
       {!isOpen && (
         <button
