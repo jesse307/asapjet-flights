@@ -197,10 +197,10 @@ export default function Home() {
                         View All
                       </Link>
                       <Link
-                        href={module.href}
+                        href={module.id === 'entity-management' ? '/modules/entity-management/create-llc' : module.href}
                         className="flex-1 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors text-center"
                       >
-                        Add New
+                        {module.id === 'entity-management' ? 'Create LLC' : 'Add New'}
                       </Link>
                     </div>
                   </div>

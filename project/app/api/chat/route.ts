@@ -25,7 +25,7 @@ const getSupabaseClient = () => {
 
 export async function POST(req: NextRequest) {
   try {
-    const { messages, context, llcData } = await req.json();
+    const { messages, context } = await req.json();
 
     // Check if Anthropic client is available
     const anthropic = getAnthropicClient();
@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
     const contextData = await fetchContextData(context);
 
     // Build system prompt with context
-    const systemPrompt = buildSystemPrompt(context, contextData, llcData);
+    const systemPrompt = buildSystemPrompt(context, contextData);
 
     // Call Claude API
     try {
@@ -58,14 +58,7 @@ export async function POST(req: NextRequest) {
         ? response.content[0].text
         : 'I apologize, but I encountered an error generating a response.';
 
-      // Check if this is an LLC creation request
-      const userMessage = messages[messages.length - 1]?.content?.toLowerCase() || '';
-      const isLLCCreation = userMessage.includes('create') && (userMessage.includes('llc') || userMessage.includes('entity'));
-
-      return NextResponse.json({
-        message: assistantMessage,
-        action: isLLCCreation && !llcData ? 'start_llc_creation' : undefined
-      });
+      return NextResponse.json({ message: assistantMessage });
     } catch (apiError: any) {
       console.error('Anthropic API error:', apiError);
       const errorMsg = apiError?.message || apiError?.error?.message || 'Anthropic API request failed';
@@ -157,28 +150,12 @@ async function fetchContextData(context: string) {
   return data;
 }
 
-function buildSystemPrompt(context: string, data: any, llcData?: any): string {
-  let llcContext = '';
-
-  if (llcData) {
-    llcContext = `
-
-**LLC CREATION IN PROGRESS:**
-The user is creating a new LLC. Here's what we have so far:
-${llcData.homeState ? `- Home State: ${llcData.homeState}` : '- Home State: NOT YET PROVIDED'}
-${llcData.qualifyStates ? `- Qualification States: ${llcData.qualifyStates}` : '- Qualification States: NOT YET PROVIDED'}
-${llcData.internalOwner ? `- Internal Owner: ${llcData.internalOwner}` : '- Internal Owner: NOT YET PROVIDED'}
-${llcData.businessPurpose ? `- Business Purpose: ${llcData.businessPurpose}` : '- Business Purpose: NOT YET PROVIDED'}
-
-Ask for the missing information one question at a time. Be conversational and friendly.`;
-  }
-
+function buildSystemPrompt(context: string, data: any): string {
   const basePrompt = `You are Ledes, an intelligent legal operations assistant for an in-house legal department portal. You help legal professionals with three key capabilities:
 
 1. **Search & Analyze Existing Data**: Query and analyze contracts, entities, and billing records in real-time
 2. **Best Practices & Guidance**: Provide legal operations best practices, contract playbook recommendations, and compliance advice
 3. **Internal Knowledge**: Help users access internal documents, policies, and company-specific procedures
-4. **LLC Creation Workflow**: Guide users through creating new LLCs by collecting: home state, qualification states, internal owner, and business purpose
 
 Your personality:
 - Professional yet friendly and approachable
@@ -199,7 +176,6 @@ ${data.contracts.map((c: any) => `- ${c.contract_name} (${c.contract_type}) with
 
 LEGAL BILLS:
 ${data.bills.map((b: any) => `- ${b.law_firm_name} - Invoice #${b.invoice_number}, Amount: $${b.amount.toLocaleString()}, Due: ${b.due_date}, Status: ${b.status}`).join('\n')}
-${llcContext}
 
 Guidelines:
 
@@ -221,18 +197,10 @@ Guidelines:
 11. Reference company-specific workflows when relevant
 12. Guide users through processes and required fields
 
-**For LLC Creation:**
-13. When a user wants to create an LLC, ask for information one question at a time
-14. First ask: "What state would you like to incorporate in?"
-15. Then ask: "What states will you be operating in (for foreign qualification)?"
-16. Then ask: "Who will be the internal owner of this LLC?"
-17. Finally ask: "What is the internal business purpose?"
-18. Once all info is collected, confirm and let them know a document will be generated
-
 **General:**
-19. Keep responses concise (2-4 sentences for simple queries, longer for guidance)
-20. Always suggest a logical next action
-21. Be proactive in identifying risks and opportunities
+13. Keep responses concise (2-4 sentences for simple queries, longer for guidance)
+14. Always suggest a logical next action
+15. Be proactive in identifying risks and opportunities
 
 Context: User is currently in the "${context}" section of the portal.`;
 
