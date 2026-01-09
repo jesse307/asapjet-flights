@@ -12,7 +12,28 @@
       "Bash(winget install:*)",
       "Bash(git remote add:*)",
       "Bash(git stash:*)",
-      "Bash(git pull:*)"
+      "Bash(git pull:*)",
+      "Bash(git clone:*)",
+      "Bash(npm install:*)",
+      "Bash(where npm:*)",
+      "Bash(cmd.exe /c \"npm install @supabase/supabase-js\")",
+      "Bash(cat:*)",
+      "Bash(cmd.exe /c \"node scripts/setup-database.js\")",
+      "Bash(cmd.exe /c \"node scripts/seed-data.mjs\")",
+      "Bash(cmd.exe /c \"npx vercel --version\")",
+      "Bash(npx vercel env add:*)",
+      "Bash(git fetch:*)",
+      "Bash(npx vercel --version)",
+      "Bash(cmd.exe /c \"npm list react-pdf @react-pdf/renderer jspdf html2pdf.js\")",
+      "Bash(cmd.exe /c \"npm install @vercel/analytics\")",
+      "Bash(npm --version:*)",
+      "Bash(powershell.exe -Command \"npm install\")",
+      "Bash(grep:*)",
+      "Bash(supabase functions deploy:*)",
+      "Bash(where:*)",
+      "Bash(npm run dev:*)",
+      "Bash(curl:*)",
+      "Bash(dir)"
     ]
   }
 }
