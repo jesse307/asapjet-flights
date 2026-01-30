@@ -78,27 +78,19 @@ async function googleAdsRequest(
 
 /**
  * Execute a GAQL (Google Ads Query Language) query
+ * Uses the REST search endpoint (not searchStream which is for gRPC)
  */
 async function executeQuery(query: string): Promise<any[]> {
   const customerId = GOOGLE_ADS_CONFIG.customerId.replace(/-/g, '');
 
   const result = await googleAdsRequest(
-    `customers/${customerId}/googleAds:searchStream`,
+    `customers/${customerId}/googleAds:search`,
     'POST',
     { query }
   );
 
-  // SearchStream returns an array of result batches
-  const results: any[] = [];
-  if (Array.isArray(result)) {
-    for (const batch of result) {
-      if (batch.results) {
-        results.push(...batch.results);
-      }
-    }
-  }
-
-  return results;
+  // REST search endpoint returns results directly in a results array
+  return result.results || [];
 }
 
 // ============================================
