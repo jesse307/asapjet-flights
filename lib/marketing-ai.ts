@@ -85,7 +85,7 @@ Focus on HIGH-INTENT SEARCH QUERIES - we want customers actively searching for:
 Return your response as a structured JSON plan with specific, actionable changes.`;
 
     const response = await this.anthropic.messages.create({
-      model: 'claude-sonnet-4-5-20251105',
+      model: 'claude-3-5-sonnet-20241022',
       max_tokens: 4000,
       messages: [{ role: 'user', content: prompt }],
     });
@@ -105,7 +105,7 @@ Return your response as a structured JSON plan with specific, actionable changes
     const prompt = this.getGoogleAdPrompt(existing);
 
     const response = await this.anthropic.messages.create({
-      model: 'claude-sonnet-4-5-20251105',
+      model: 'claude-3-5-sonnet-20241022',
       max_tokens: 2000,
       messages: [{ role: 'user', content: prompt }],
     });
@@ -142,7 +142,7 @@ Provide specific recommendations for:
 Return as structured JSON with actionable recommendations.`;
 
     const response = await this.anthropic.messages.create({
-      model: 'claude-sonnet-4-5-20251105',
+      model: 'claude-3-5-sonnet-20241022',
       max_tokens: 3000,
       messages: [{ role: 'user', content: prompt }],
     });
