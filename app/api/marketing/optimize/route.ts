@@ -78,8 +78,27 @@ export async function GET(request: NextRequest) {
 
     // 1. Fetch campaign performance from Google Ads
     log.push('Fetching campaign performance from Google Ads...');
-    const campaigns = await getCampaignPerformance(7);
-    log.push(`Found ${campaigns.length} campaigns`);
+    let campaigns;
+    try {
+      campaigns = await getCampaignPerformance(7);
+      log.push(`Found ${campaigns.length} campaigns`);
+    } catch (apiError) {
+      const errorMsg = apiError instanceof Error ? apiError.message : 'Unknown error';
+      log.push(`Google Ads API error: ${errorMsg}`);
+
+      // Check if it's an access level issue (404 or permission error)
+      if (errorMsg.includes('404') || errorMsg.includes('403') || errorMsg.includes('PERMISSION_DENIED')) {
+        return NextResponse.json({
+          status: 'api_access_error',
+          message: 'Google Ads API access not available. Your developer token may be in Test Account mode.',
+          help: 'Apply for Basic Access at: https://developers.google.com/google-ads/api/docs/access-levels',
+          error: errorMsg,
+          log,
+        });
+      }
+
+      throw apiError;
+    }
 
     if (campaigns.length === 0) {
       return NextResponse.json({
