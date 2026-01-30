@@ -12,10 +12,8 @@ const GOOGLE_ADS_SCOPES = [
   'https://www.googleapis.com/auth/adwords',
 ];
 
-const REDIRECT_URI = process.env.GOOGLE_ADS_REDIRECT_URI ||
-  (process.env.VERCEL_URL
-    ? `https://${process.env.VERCEL_URL}/api/auth/google-ads/callback`
-    : 'http://localhost:3000/api/auth/google-ads/callback');
+// Use production domain for OAuth callback
+const REDIRECT_URI = process.env.GOOGLE_ADS_REDIRECT_URI || 'https://asapjet.flights/api/auth/google-ads/callback';
 
 /**
  * GET /api/auth/google-ads

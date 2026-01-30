@@ -6,10 +6,8 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 
-const REDIRECT_URI = process.env.GOOGLE_ADS_REDIRECT_URI ||
-  (process.env.VERCEL_URL
-    ? `https://${process.env.VERCEL_URL}/api/auth/google-ads/callback`
-    : 'http://localhost:3000/api/auth/google-ads/callback');
+// Use production domain for OAuth callback
+const REDIRECT_URI = process.env.GOOGLE_ADS_REDIRECT_URI || 'https://asapjet.flights/api/auth/google-ads/callback';
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
