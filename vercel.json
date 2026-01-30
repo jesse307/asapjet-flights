@@ -2,7 +2,15 @@
   "crons": [
     {
       "path": "/api/marketing/optimize",
-      "schedule": "0 8 * * *"
+      "schedule": "0 13 * * *"
+    },
+    {
+      "path": "/api/marketing/optimize",
+      "schedule": "0 19 * * *"
+    },
+    {
+      "path": "/api/marketing/optimize",
+      "schedule": "0 1 * * *"
     }
   ]
 }
